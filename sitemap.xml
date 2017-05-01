@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</loc>
+    <lastmod>2017-04-19T17:48:23+05:30</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/</loc>
+    <lastmod>2017-04-18T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/</loc>
+    <lastmod>2017-04-19T17:48:23+05:30</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/page/about/</loc>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/tags/kubernetes/</loc>
+    <lastmod>2017-04-18T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/page/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/post/</loc>
+    <lastmod>2017-04-19T17:48:23+05:30</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/tags/sdn/</loc>
+    <lastmod>2017-04-18T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/tags/</loc>
+    <priority>0</priority>
+  </url>
+  
+</urlset>
