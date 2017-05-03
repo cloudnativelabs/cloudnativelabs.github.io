@@ -5,8 +5,160 @@
     <link>https://cloudnativelabs.github.io/index.xml</link>
     <description>Recent content on </description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 19 Apr 2017 17:48:23 +0530</lastBuildDate>
+    <lastBuildDate>Mon, 01 May 2017 17:48:23 +0530</lastBuildDate>
     <atom:link href="https://cloudnativelabs.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>K8s Network Policies with iptables</title>
+      <link>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</link>
+      <pubDate>Mon, 01 May 2017 17:48:23 +0530</pubDate>
+      
+      <guid>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</guid>
+      <description>
+
+&lt;p&gt;Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is to show how iptables on cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementating a network policy controller in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. But concepts described can be used to build your own version of network policy enforcer.&lt;/p&gt;
+
+&lt;p&gt;Kubernetes networking has following security model:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;for every pod by default ingress is allowed, so a pod can recieve traffic from any one&lt;/li&gt;
+&lt;li&gt;default behaviour can be changed to default deny per namespace basis. When a namespace is configured with isolation tye of &lt;strong&gt;DefaultDeny&lt;/strong&gt; no traffic is allowed to the pods in that namespace&lt;/li&gt;
+&lt;li&gt;when a namespace is configured with &lt;strong&gt;DefaultDeny&lt;/strong&gt; isolation type, network policies can be configured in the namepspace to whitelist the traffic to the pods in that namespace&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Lets qucikly recap what network policies are then we will dive in to the iptables based solution aspects.&lt;/p&gt;
+
+&lt;h3 id=&#34;network-policy&#34;&gt;network policy&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes network policies are application centric compared to infrastrucutre/network centric standard firewalls. There are no explicit CIDR or IP used for matching source or destination IP&amp;rsquo;s.
+Network policies build up on labels and selectors which are key concepts of Kubernetes that are used to organize (for e.g all DB tier pods of app) and select subsets of objects. A typical network policy looks like below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  ingress:
+   - from:
+     - namespaceSelector:
+       matchLabels:
+         project: myproject
+     - podSelector:
+       matchLabels:
+       role: frontend
+   ports:
+     - protocol: tcp
+     port: 6379
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the network policy &lt;strong&gt;matchLabels&lt;/strong&gt; in  &lt;strong&gt;podSelector&lt;/strong&gt; section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a &lt;strong&gt;matchLabels&lt;/strong&gt; in &lt;strong&gt;podSelector&lt;/strong&gt; section which identifies the set of pods that will become source pods set. Alternativley &lt;strong&gt;namespaceSelector&lt;/strong&gt; in the ingress section can be used to select all pods in a namesapce. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.&lt;/p&gt;
+
+&lt;h3 id=&#34;evaluating-networking-policies&#34;&gt;evaluating networking policies&lt;/h3&gt;
+
+&lt;p&gt;Network policies are declarative in nature to express application intent. So its implementation of network policies responsibiity to translate the intent to configuration. Essentially a network policy implicitly evaluates to be definition of set of source pods that can talk to set of destination pod over specified port and protocol. Pods being ephermal in nature, set of pods matching the label selector is a dynamic set. In later section we will see how this poses challenges in how delta changes to iptable configuration applied with minimal disruption to datapath. But first lets see how we can configure iptables at a given time to reflect current state of network polcies.&lt;/p&gt;
+
+&lt;p&gt;Kubernetes provides a convenient way to retrieve the set of pods matching set of labels through API or kubectl.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl 192.168.1.99:8080/api/v1/namespaces/testns1/pods?labelSelector=app%3Dguestbook,tier%3Dfrontend
+kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=testns1 | jq &#39;.items[] | .status | .podIP&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So its easy to get the set of source pod IP&amp;rsquo;s and set of destination pod IP&amp;rsquo;s based on the &lt;strong&gt;matchLables&lt;/strong&gt; in network policy spec.&lt;/p&gt;
+
+&lt;h3 id=&#34;representing-network-policy-in-iptables&#34;&gt;representing network policy in iptables&lt;/h3&gt;
+
+&lt;p&gt;Since we are only concerned about the filtering of the packer, we will use only iptable filter functionality and all the examples below refer to &lt;strong&gt;filter&lt;/strong&gt; table.&lt;/p&gt;
+
+&lt;p&gt;We have seen how we can evaluate a network policy to a white list rules expressing set of source pod IP&amp;rsquo;s that can reach port and protocol on set of destination pod IP&amp;rsquo;s. A natural choice is to represent each network policy as user defined chain. A network policy evaluates to single destinaton pod set. But a network policy specification can have multiple ingress rules. Each ingress rule evaluates to set of pods that are source pods, port and protocol combination. Below is psedo code how user chain for the network policy can be poupulated with rules to accept the traffic.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;for each dstIP in set of destination pod IP as per the podSelector in the network policy {
+    for each ingressRule in ingressRules of network policy {
+        for srcIP in set of source pod IP as per the podSelector in ingress rule of the network policy {
+            for port, porotcol in ports of the network policy {
+                 add rule &#39;-A KUBE-NWPLCY-CHAIN -s $srcIP -d $dstIP -p $protocol -m $protocol --dport $port -j ACCEPT&#39; 
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use &lt;strong&gt;ipset&lt;/strong&gt; to better represent the rules and more importantly data path can scale well. A slightly modified pseudo code to populate the rules in the chain.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;form ipset dstIpset with all destination pod ip evaluated as per the podSelector in the policy
+for each ingressRule in ingressRules of network policy {
+    form ipset srcIpset wth all source pod IP as evvaluated as per the podSelector in ingress rule of the network policy {
+    for port, porotcol in ports of the network policy {
+         add rule &#39;-A KUBE-NWPLCY-CHAIN -p $protocol -m set --match-set $srcIpset src -m set --match-set dstIpset dst -m $protocol --dport $port -j ACCEPT&#39;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Each cluster node can configured with representation of network policies with iptables as above. Destination ipset can be further optimized to reprsent pod IP of the pods running on specific node. Now lets see how inbound traffic to pod can be run through the network policy chains.&lt;/p&gt;
+
+&lt;h3 id=&#34;pod-ingress-traffic-paths&#34;&gt;Pod ingress traffic paths&lt;/h3&gt;
+
+&lt;p&gt;There are multiple data paths through which packet is recieved by a pod as shown in below diagram.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/pod-ingress-traffic.jpg&#34; alt=&#34;Pod Ingress traffic&#34; /&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Pod on a node reaching to pod on same node through bridge (pod2-&amp;gt;pod3)&lt;/li&gt;
+&lt;li&gt;Pod on a node reaching to pod on same node but through the service proxy (pod1-&amp;gt;pod2)&lt;/li&gt;
+&lt;li&gt;Pod on a node reaching to pod on other node (pod3-&amp;gt;pod4)&lt;/li&gt;
+&lt;li&gt;Pod on a node reaching to pod on other node through service proxy (pod5-&amp;gt;pod6)&lt;/li&gt;
+&lt;li&gt;external client reaching to pod (external client-&amp;gt;pod7)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;pod-specific-firewall-chain&#34;&gt;pod specific firewall chain&lt;/h3&gt;
+
+&lt;p&gt;Ingress traffic to a pod can be whitelisted through one or more network polcies. So its important that packet destinted to a pod is run through the neccessary network policy chains. Natural choice would be to have a iptable chain per pod. Now we need to run through the traffic destined for a pod through pod firewall chain. We only have to consider the pods whose namespace has ingress set to DefaultDeny configuration. Also on a cluster node, we are only concerned about the pods running on the node.&lt;/p&gt;
+
+&lt;p&gt;For the case #1 data path above we will need to use &lt;strong&gt;physdev&lt;/strong&gt; module to match the traffic that is getting bridged locally. From iptables perspective it will still go through the FORWARD chain. For the case #2 from iptables perspective it is output packer, so it will only hit OUTPUT chain. Rest of the cases #3 to #5 all fall under the smae category. Traffic will hit the FORWARD chain. Following is the pseudo code to populate FORWARD and OUTPUT chains to jump the traffic destined for a pod to pod specific firewall chain.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;for each pod running on the node {
+    if pod namespace has &#39;DefautDeny&#39; as ingress type {
+        add rule &#39;-A FORWARD -d $podIP -m physdev --physdev-is-bridged -j KUBE-POD-SPECIFIC-FW-CHAIN&#39;
+        add rule &#39;-A FORWARD -d $podIP -j KUBE-POD-SPECIFIC-FW-CHAIN&#39;
+        add rule &#39;-A OUTPUT -d $podIP  -j KUBE-POD-SPECIFIC-FW-CHAIN&#39;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;rules-to-runthrough-network-policies&#34;&gt;rules to runthrough network policies&lt;/h3&gt;
+
+&lt;p&gt;We will need rules in the pod specific firewall chain to take appropriate actions. First we have default rule to REJECT the traffic in case traffic destined to pod does not match any white list rules in the network policy chains. We will need a rule to permit the return traffic to the pod (for the connections which originated from the pod) using conntrack. A sample set of rules in the pod specific firewall chain would look like below. Number of rules to jump to the network policy chains depends on the how many network policies are applicable to a pod.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;-A KUBE-POD-SPECIFIC-FW-CHAIN -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN1
+-A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN2
+-A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN3
+-A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreachable
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;state-synchronization&#34;&gt;state synchronization&lt;/h3&gt;
+
+&lt;p&gt;Like mentioned earlier network polcies only express the intent. So its implementaions responsiblity to trasalate the intent to desired configuration. There are number of events that will impact the iptables configuration. For e.g.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;add/delete of pods&lt;/li&gt;
+&lt;li&gt;modification to namespace default ingress behaviour&lt;/li&gt;
+&lt;li&gt;add/delete of network policies&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Implementation of network policies have to watch for the events from Kubernetes API server and have to reflect the changes in the iptables configration.&lt;/p&gt;
+
+&lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
+
+&lt;p&gt;We went over how iptables can used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the artical is implemented in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. You can deploy Kube-router and see who iptables are used as effective solution to enforce network policies.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;730&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
+&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Kube-router</title>
@@ -16,7 +168,12 @@
       <guid>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</guid>
       <description>
 
-&lt;p&gt;In previous &lt;a href=&#34;https://cloudnativelabs.github.io/blog/post/kubernetes-networking/&#34;&gt;blog&lt;/a&gt; we went over the Kubernetes service discovery and load balancing, network policies. In this blog we will use &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;, a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action. We will setup a Kubernetes cluster from scratch and use kube-router instead of kube-proxy and demonstrate how kube-router provides a solution for cross-node pod-to-pod networking, provides a service proxy on each node and load balances the traffic. We will also see the network policies in action.&lt;/p&gt;
+&lt;p&gt;In previous &lt;a href=&#34;https://cloudnativelabs.github.io/blog/post/kubernetes-networking/&#34;&gt;blog&lt;/a&gt; we went over the Kubernetes service discovery, load balancing and network policies. In this blog we will use Kube-router a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;730&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
+&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;We will setup a Kubernetes cluster from scratch and use kube-router instead of kube-proxy and demonstrate how kube-router provides a solution for cross-node pod-to-pod networking, provides a service proxy on each node and load balances the traffic. We will also see the network policies in action.&lt;/p&gt;
 
 &lt;h3 id=&#34;cluster-setup&#34;&gt;cluster setup&lt;/h3&gt;
 
