@@ -155,7 +155,7 @@ spec:
      port: 6379
 </code></pre>
 
-<p>In the network policy <strong>matchLabels</strong> in  <strong>podSelector</strong> section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a <strong>matchLabels</strong> in <strong>podSelector</strong> section which identifies the set of pods that will become source pods set. Alternativley <strong>namespaceSelector</strong> in the ingress section can be used to select all pods in a namesapce. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.</p>
+<p>In the network policy <strong>matchLabels</strong> in  <strong>podSelector</strong> section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a <strong>matchLabels</strong> in <strong>podSelector</strong> section which identifies the set of pods that will become source pods set. Alternativley <strong>namespaceSelector</strong> in the ingress section can be used to select all pods in a namespace. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.</p>
 
 <h3 id="evaluating-networking-policies">evaluating networking policies</h3>
 
@@ -249,7 +249,7 @@ for each ingressRule in ingressRules of network policy {
 <li>add/delete of network policies</li>
 </ul>
 
-<p>Implementation of network policies have to watch for the events from Kubernetes API server and have to reflect the changes in the iptables configration.</p>
+<p>Implementation of network policies have to watch for the events from Kubernetes API server and have to reflect the changes in the iptables configuration.</p>
 
 <h3 id="conclusion">conclusion</h3>
 
