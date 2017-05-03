@@ -239,13 +239,13 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 <h3 id="packet-flow">packet flow</h3>
 
-<p>Packet flow through the cluster node goes through following path:</p>
+<p>Packet flow through the cluster node goes through following path with pod specific firewall and network policy chains in place:</p>
 
 <ul>
-<li>destination IP is matched in FORWARD and OUTPUT chains, if destination ip corresponds to a pod running on the node, that needs ingress blocked by default and only permit the traffic as per the network policies, then jump to pod specific firewall chain.</li>
-<li>in the pod specific firewall chain, if the packet belongs to established or related session then allow the traffici, else</li>
-<li>in the pod specific firewall chain run through all network policy chain, if there is any matching rule (matching source ip, port and protocol) in any of the rule in network policy chain then packet is accepted</li>
-<li>if there is no match of rule in any of the network policy chain then packets get dropped.</li>
+<li>destination IP is matched in FORWARD and OUTPUT chains of filter table, if destination ip corresponds to a pod running on the node, that needs ingress blocked by default and only permit the traffic as per the network policies, then jump to pod specific firewall chain.</li>
+<li>in the pod specific firewall chain, if the packet belongs to established or related session then allow the traffic, else</li>
+<li>in the pod specific firewall chain run through all network policy chain, if there is any matching rule (matching source ip, port and protocol) in any of the network policy chains then packet is accepted</li>
+<li>if there is no match of rule in any of the network policy chains then packets get dropped.</li>
 </ul>
 
 <h3 id="state-synchronization">state synchronization</h3>
