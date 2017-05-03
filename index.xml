@@ -137,9 +137,20 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN3
 iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreachable
 &lt;/code&gt;&lt;/pre&gt;
 
+&lt;h3 id=&#34;packet-flow&#34;&gt;packet flow&lt;/h3&gt;
+
+&lt;p&gt;Packet flow through the cluster node goes through following path:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;destination IP is matched in FORWARD and OUTPUT chains, if destination ip corresponds to a pod running on the node, that needs ingress blocked by default and only permit the traffic as per the network policies, then jump to pod specific firewall chain.&lt;/li&gt;
+&lt;li&gt;in the pod specific firewall chain, if the packet belongs to established or related session then allow the traffici, else&lt;/li&gt;
+&lt;li&gt;in the pod specific firewall chain run through all network policy chain, if there is any matching rule (matching source ip, port and protocol) in any of the rule in network policy chain then packet is accpted&lt;/li&gt;
+&lt;li&gt;if there is no match of rule in any of the network policy chain then packets get dropped.&lt;/li&gt;
+&lt;/ul&gt;
+
 &lt;h3 id=&#34;state-synchronization&#34;&gt;state synchronization&lt;/h3&gt;
 
-&lt;p&gt;Like mentioned earlier network policies only express the intent. So its implementations responsibility to translate the intent to desired configuration. There are number of events that will impact the iptables configuration. For e.g.&lt;/p&gt;
+&lt;p&gt;Like mentioned earlier network policy only express the intent. So its implementations responsibility to translate the intent to desired configuration. There are number of events that need reconfiguring the iptable so that configuration reflects the desired intent. For e.g&lt;/p&gt;
 
 &lt;ul&gt;
 &lt;li&gt;add/delete of pods&lt;/li&gt;
@@ -147,7 +158,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 &lt;li&gt;add/delete of network policies&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;Implementation of network policies have to watch for the events from Kubernetes API server and have to reflect the changes in the iptables configuration.&lt;/p&gt;
+&lt;p&gt;All these events will cause the add/delete of rules in the chains, or add/deletion of network policy and pod specific firewall chain. Implementation of network policies have to watch for the events from Kubernetes API server and have to reflect the changes in the iptables configuration.&lt;/p&gt;
 
 &lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
 
