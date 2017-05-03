@@ -144,7 +144,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 &lt;ul&gt;
 &lt;li&gt;destination IP is matched in FORWARD and OUTPUT chains, if destination ip corresponds to a pod running on the node, that needs ingress blocked by default and only permit the traffic as per the network policies, then jump to pod specific firewall chain.&lt;/li&gt;
 &lt;li&gt;in the pod specific firewall chain, if the packet belongs to established or related session then allow the traffici, else&lt;/li&gt;
-&lt;li&gt;in the pod specific firewall chain run through all network policy chain, if there is any matching rule (matching source ip, port and protocol) in any of the rule in network policy chain then packet is accpted&lt;/li&gt;
+&lt;li&gt;in the pod specific firewall chain run through all network policy chain, if there is any matching rule (matching source ip, port and protocol) in any of the rule in network policy chain then packet is accepted&lt;/li&gt;
 &lt;li&gt;if there is no match of rule in any of the network policy chain then packets get dropped.&lt;/li&gt;
 &lt;/ul&gt;
 
@@ -162,7 +162,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 &lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
 
-&lt;p&gt;We went over how iptables can used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.&lt;/p&gt;
+&lt;p&gt;We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.&lt;/p&gt;
 
 &lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;730&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
 &lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
