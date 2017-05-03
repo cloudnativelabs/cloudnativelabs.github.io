@@ -5,25 +5,25 @@
     <link>https://cloudnativelabs.github.io/post/index.xml</link>
     <description>Recent content in Posts on </description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Mon, 01 May 2017 17:48:23 +0530</lastBuildDate>
+    <lastBuildDate>Wed, 03 May 2017 17:48:23 +0530</lastBuildDate>
     <atom:link href="https://cloudnativelabs.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>K8s Network Policies with iptables</title>
       <link>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</link>
-      <pubDate>Mon, 01 May 2017 17:48:23 +0530</pubDate>
+      <pubDate>Wed, 03 May 2017 17:48:23 +0530</pubDate>
       
       <guid>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</guid>
       <description>
 
-&lt;p&gt;Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is to show how iptables on cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. But concepts described can be used to build your own version of network policy enforcer.&lt;/p&gt;
+&lt;p&gt;Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. But concepts described can be used to build your own version of network policy enforcer with iptables.&lt;/p&gt;
 
 &lt;p&gt;Kubernetes networking has following security model:&lt;/p&gt;
 
 &lt;ul&gt;
 &lt;li&gt;for every pod by default ingress is allowed, so a pod can receive traffic from any one&lt;/li&gt;
-&lt;li&gt;default behaviour can be changed to default deny per namespace basis. When a namespace is configured with isolation tye of &lt;strong&gt;DefaultDeny&lt;/strong&gt; no traffic is allowed to the pods in that namespace&lt;/li&gt;
-&lt;li&gt;when a namespace is configured with &lt;strong&gt;DefaultDeny&lt;/strong&gt; isolation type, network policies can be configured in the namepspace to whitelist the traffic to the pods in that namespace&lt;/li&gt;
+&lt;li&gt;default allow behaviour can be changed to default deny on per namespace basis. When a namespace is configured with isolation tye of &lt;strong&gt;DefaultDeny&lt;/strong&gt; no traffic is allowed to the pods in that namespace&lt;/li&gt;
+&lt;li&gt;when a namespace is configured with &lt;strong&gt;DefaultDeny&lt;/strong&gt; isolation type, network policies can be configured in the namespace to whitelist the traffic to the pods in that namespace&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;Lets quickly recap what network policies are then we will dive in to the iptables based solution aspects.&lt;/p&gt;
@@ -59,21 +59,19 @@ spec:
 
 &lt;h3 id=&#34;evaluating-networking-policies&#34;&gt;evaluating networking policies&lt;/h3&gt;
 
-&lt;p&gt;Network policies are declarative in nature to express application intent. So its implementation of network policies responsibility to translate the intent to configuration. Essentially a network policy implicitly evaluates to be definition of set of source pods that can talk to set of destination pod over specified port and protocol. Pods being ephermal in nature, set of pods matching the label selector is a dynamic set. In later section we will see how this poses challenges in how delta changes to iptable configuration applied with minimal disruption to datapath. But first lets see how we can configure iptables at a given time to reflect current state of network policies.&lt;/p&gt;
-
-&lt;p&gt;Kubernetes provides a convenient way to retrieve the set of pods matching set of labels through API or kubectl.&lt;/p&gt;
+&lt;p&gt;Network policies are declarative in nature to express application intent. So its implementation of network policies responsibility to translate the intent to configuration. Kubernetes provides a convenient way to retrieve the set of pods matching a label selector through API or kubectl as shown below.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;curl 192.168.1.99:8080/api/v1/namespaces/testns1/pods?labelSelector=app%3Dguestbook,tier%3Dfrontend
 kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=testns1 | jq &#39;.items[] | .status | .podIP&#39;
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;So its easy to get the set of source pod IP&amp;rsquo;s and set of destination pod IP&amp;rsquo;s based on the &lt;strong&gt;matchLables&lt;/strong&gt; in network policy spec.&lt;/p&gt;
+&lt;p&gt;So its easy to get the set of source pod IP&amp;rsquo;s and set of destination pod IP&amp;rsquo;s based on the &lt;strong&gt;matchLables&lt;/strong&gt; in network policy spec. Essentially a network policy implicitly evaluates to be definition of set of source pods that can talk to set of destination pod over specified port and protocol. Pods being ephermal in nature, set of pods matching the label selector is a dynamic set. In later section we will see how this poses challenges in how delta changes to iptable configuration applied with minimal disruption to datapath. But first lets see how we can configure iptables at a given time to reflect current state of network policies.&lt;/p&gt;
 
 &lt;h3 id=&#34;representing-network-policy-in-iptables&#34;&gt;representing network policy in iptables&lt;/h3&gt;
 
-&lt;p&gt;Since we are only concerned about the filtering of the packer, we will use only iptable filter functionality and all the examples below refer to &lt;strong&gt;filter&lt;/strong&gt; table.&lt;/p&gt;
+&lt;p&gt;Since we are only concerned about the filtering of the packets, we will use only iptable filter functionality and all the examples below refer to use of &lt;strong&gt;filter&lt;/strong&gt; table.&lt;/p&gt;
 
-&lt;p&gt;We have seen how we can evaluate a network policy to a white list rules expressing set of source pod IP&amp;rsquo;s that can reach port and protocol on set of destination pod IP&amp;rsquo;s. A natural choice is to represent each network policy as user defined chain. A network policy evaluates to single destination pod set. But a network policy specification can have multiple ingress rules. Each ingress rule evaluates to set of pods that are source pods, port and protocol combination. Below is pseudo code how user chain for the network policy can be populated with rules to accept the traffic.&lt;/p&gt;
+&lt;p&gt;We have seen how we can evaluate a network policy to a whitelist rules expressing set of source pod IP&amp;rsquo;s that can reach port and protocol on set of destination pod IP&amp;rsquo;s. A natural choice is to represent each network policy as user defined chain. A network policy evaluates to single destination pod set. But a network policy specification can have multiple ingress rules. Each ingress rule evaluates to set of pods that are source pods, port and protocol combination. Below is pseudo code how user chain for the network policy can be populated with rules to accept the traffic.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;for each dstIP in set of destination pod IP as per the podSelector in the network policy {
     for each ingressRule in ingressRules of network policy {
@@ -86,7 +84,7 @@ kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=test
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;As you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use &lt;strong&gt;ipset&lt;/strong&gt; to better represent the rules and more importantly data path can scale well. A slightly modified pseudo code to populate the rules in the chain.&lt;/p&gt;
+&lt;p&gt;Since we have a rule for each source pod ip and destination pod IP, as you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use &lt;strong&gt;ipset&lt;/strong&gt; to better represent the rules and more importantly data path can scale well. A slightly modified pseudo code to populate the rules in the chain.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;form ipset dstIpset with all destination pod ip evaluated as per the podSelector in the policy
 for each ingressRule in ingressRules of network policy {
