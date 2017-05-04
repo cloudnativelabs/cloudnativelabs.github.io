@@ -57,7 +57,7 @@ spec:
      port: 6379
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;In the network policy &lt;strong&gt;matchLabels&lt;/strong&gt; in  &lt;strong&gt;podSelector&lt;/strong&gt; section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a &lt;strong&gt;matchLabels&lt;/strong&gt; in &lt;strong&gt;podSelector&lt;/strong&gt; section which identifies the set of pods that will become source pods set. Alternativley &lt;strong&gt;namespaceSelector&lt;/strong&gt; in the ingress section can be used to select all pods in a namespace. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.&lt;/p&gt;
+&lt;p&gt;In the network policy &lt;strong&gt;matchLabels&lt;/strong&gt; in  &lt;strong&gt;podSelector&lt;/strong&gt; section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a &lt;strong&gt;matchLabels&lt;/strong&gt; in &lt;strong&gt;podSelector&lt;/strong&gt; section which identifies the set of pods that will become source pods set. Alternatively &lt;strong&gt;namespaceSelector&lt;/strong&gt; in the ingress section can be used to select all pods in a namespace. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.&lt;/p&gt;
 
 &lt;h3 id=&#34;evaluating-networking-policies&#34;&gt;evaluating networking policies&lt;/h3&gt;
 
