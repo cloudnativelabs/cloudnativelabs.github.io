@@ -184,7 +184,7 @@ kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=test
 }
 </code></pre>
 
-<p>Since we have a rule for each source pod ip and destination pod IP combination, as you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use <strong>ipset</strong> to better represent the rules and more importantly a data path that scalies well. A slightly modified pseudo code to populate the rules in the chain.</p>
+<p>Since we have a rule for each source pod ip and destination pod IP combination, as you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use <strong>ipset</strong> to better represent the rules and more importantly a data path that scales well. A slightly modified pseudo code to populate the rules in the chain.</p>
 
 <pre><code class="language-text">form ipset dstIpset with all destination pod ip evaluated as per the podSelector in the policy
 for each ingressRule in ingressRules of network policy {
@@ -310,6 +310,14 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
       <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
         <ul class="list-inline text-center footer-links">
           
+              <li>
+                <a href="mailto:murali.reddy@cloudnativelabs.net" title="Email me">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
               <li>
                 <a href="https://github.com/cloudnativelabs" title="GitHub">
                   <span class="fa-stack fa-lg">

@@ -5,6 +5,8 @@
     <link>https://cloudnativelabs.github.io/post/index.xml</link>
     <description>Recent content in Posts on </description>
     <generator>Hugo -- gohugo.io</generator>
+    <managingEditor>murali.reddy@cloudnativelabs.net (Cloudnative Labs)</managingEditor>
+    <webMaster>murali.reddy@cloudnativelabs.net (Cloudnative Labs)</webMaster>
     <lastBuildDate>Wed, 03 May 2017 17:48:23 +0530</lastBuildDate>
     <atom:link href="https://cloudnativelabs.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
@@ -12,7 +14,7 @@
       <title>Enforcing Kubernetes network policies with iptables</title>
       <link>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</link>
       <pubDate>Wed, 03 May 2017 17:48:23 +0530</pubDate>
-      
+      <author>murali.reddy@cloudnativelabs.net (Cloudnative Labs)</author>
       <guid>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</guid>
       <description>
 
@@ -84,7 +86,7 @@ kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=test
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Since we have a rule for each source pod ip and destination pod IP combination, as you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use &lt;strong&gt;ipset&lt;/strong&gt; to better represent the rules and more importantly a data path that scalies well. A slightly modified pseudo code to populate the rules in the chain.&lt;/p&gt;
+&lt;p&gt;Since we have a rule for each source pod ip and destination pod IP combination, as you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use &lt;strong&gt;ipset&lt;/strong&gt; to better represent the rules and more importantly a data path that scales well. A slightly modified pseudo code to populate the rules in the chain.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-text&#34;&gt;form ipset dstIpset with all destination pod ip evaluated as per the podSelector in the policy
 for each ingressRule in ingressRules of network policy {
@@ -173,7 +175,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
       <title>Kube-router</title>
       <link>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</link>
       <pubDate>Wed, 19 Apr 2017 17:48:23 +0530</pubDate>
-      
+      <author>murali.reddy@cloudnativelabs.net (Cloudnative Labs)</author>
       <guid>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</guid>
       <description>
 
@@ -282,7 +284,7 @@ chmod +x kube-router
       <title>Kubernetes networking</title>
       <link>https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/</link>
       <pubDate>Tue, 18 Apr 2017 00:00:00 +0000</pubDate>
-      
+      <author>murali.reddy@cloudnativelabs.net (Cloudnative Labs)</author>
       <guid>https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/</guid>
       <description>
 
