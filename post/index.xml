@@ -102,7 +102,7 @@ for each ingressRule in ingressRules of network policy {
 
 &lt;p&gt;There are multiple data paths through which packet is received by a pod as shown in below diagram.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;img/pod-ingress-traffic.jpg&#34; alt=&#34;Pod Ingress traffic&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/pod-ingress-traffic.jpg&#34; alt=&#34;Pod Ingress traffic&#34; /&gt;&lt;/p&gt;
 
 &lt;ol&gt;
 &lt;li&gt;Pod on a node reaching to pod on same node through bridge (pod2-&amp;gt;pod3)&lt;/li&gt;
