@@ -5,9 +5,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-  <title>Kubernetes networking</title>
-  <meta property="og:title" content="Kubernetes networking" />
-  <meta name="twitter:title" content="Kubernetes networking" />
+  <title>Kubernetes Networking</title>
+  <meta property="og:title" content="Kubernetes Networking" />
+  <meta name="twitter:title" content="Kubernetes Networking" />
   <meta name="description" content="This article gives brief overview of fundamnetal networking concepts in Kubernetes.
 First thing one notices with Kubernetes in comparision to other container orchestration platforms is container itself is not a first class construct in Kubernetes. Containers always exists in the context of pod. So first lets understand the basic Kubernetes building block Pod that consumes network. A pod is a group of one or more containers that are always co-located and co-scheduled, and run in a shared context.">
   <meta property="og:description" content="This article gives brief overview of fundamnetal networking concepts in Kubernetes.
@@ -32,6 +32,12 @@ First thing one notices with Kubernetes in comparision to other container orches
   <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/pygment_highlights.css" />
   <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/highlight.min.css" />
 
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97817717-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
 
 </head>
 
@@ -45,7 +51,7 @@ First thing one notices with Kubernetes in comparision to other container orches
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="https://cloudnativelabs.github.io/"></a>
+      <a class="navbar-brand" href="https://cloudnativelabs.github.io"></a>
     </div>
 
     <div class="collapse navbar-collapse" id="main-navbar">
@@ -94,7 +100,7 @@ First thing one notices with Kubernetes in comparision to other container orches
         <div class="row">
           <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             <div class="post-heading">
-              <h1>Kubernetes networking</h1>
+              <h1>Kubernetes Networking</h1>
                 
                 
                   <span class="post-meta">
@@ -121,7 +127,7 @@ First thing one notices with Kubernetes in comparision to other container orches
 
 <p>This article gives brief overview of fundamnetal networking concepts in Kubernetes.</p>
 
-<p>First thing one notices with Kubernetes in comparision to other container orchestration platforms is container itself is not a first class construct in Kubernetes. Containers always exists in the context of pod. So first lets understand the basic Kubernetes building block <em>Pod</em> that consumes network. A pod is a group of one or more containers that are always co-located and co-scheduled, and run in a shared context. The shared context of a pod is a set of Linux namespaces, cgroups etc. Containers within a pod share an IP address and port space, and can find each other via localhost. They can also communicate with each other using standard inter-process communications. Think of it as an application-specific “logical host” containing one or more application containers which are relatively tightly coupled. Containers in different pods have distinct IP addresses and can not communicate by IPC. Please refer to Pod <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod/">overview</a> for further details. As far as networking is concerned pod is the network endpoint. So essentially Kubernetes networking is all about Pods. With that note lets procced.</p>
+<p>First thing one notices with Kubernetes in comparision to other container orchestration platforms is container itself is not a first class construct in Kubernetes. Containers always exists in the context of pod. So first lets understand the basic Kubernetes building block <em>Pod</em> that consumes network. A pod is a group of one or more containers that are always co-located and co-scheduled, and run in a shared context. The shared context of a pod is a set of Linux namespaces, cgroups etc. Containers within a pod share an IP address and port space, and can find each other via localhost. They can also communicate with each other using standard inter-process communications. Think of it as an application-specific &ldquo;logical host&rdquo; containing one or more application containers which are relatively tightly coupled. Containers in different pods have distinct IP addresses and can not communicate by IPC. Please refer to Pod <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod/">overview</a> for further details. As far as networking is concerned pod is the network endpoint. So essentially Kubernetes networking is all about Pods. With that note lets procced.</p>
 
 <p>Networking functionality in Kubernetes (as of 1.6.1) broadly address below problems:</p>
 
@@ -225,7 +231,7 @@ First thing one notices with Kubernetes in comparision to other container orches
 
 <h2 id="service-discovery-and-load-balancing">service discovery and load balancing</h2>
 
-<p>With the understanding of Kubernetes network requirements of how cross-node pod-to-pod, and node to pod communication works, lets explore the critical functionality of service discovery and load-balancing. Any non-trivial containerized application will end up running multiple pods running different services (a web server, DB server etc). This leads to a problem:  how some set of Pods running a service  provide functionality to other Pods inside the Kubernetes cluster, how do a service consuming pod find out and keep track of which backend pods are providing a service? Problem is compounded by the fact that pods itself can be ephemeral.</p>
+<p>With the understanding of Kubernetes network requirements of how cross-node pod-to-pod, and node to pod communication works, lets explore the critical functionality of service discovery and load-balancing. Any non-trivial containerized application will end up running multiple pods running different services (a web server, DB server etc). This leads to a problem: how some set of Pods running a service provide functionality to other Pods inside the Kubernetes cluster, how do a service consuming pod find out and keep track of which backend pods are providing a service? Problem is compounded by the fact that pods itself can be ephemeral.</p>
 
 <h3 id="services-and-endpoints">services and endpoints</h3>
 
@@ -243,13 +249,12 @@ First thing one notices with Kubernetes in comparision to other container orches
 
 <h3 id="exposing-service">exposing service</h3>
 
-<p>A pod that want to consume service, can get list of endpoints and do client side loadbalancing to manage how and to which endpoint it connects. But the most common case is server side load balancing where a service endpoints are fronted by virtual ip and load balancer that load balances traffic to virtual ip to endpoints. Idea of load balancing traffic to service endpoints is integrated in to Kubernetes service defintion. Kubernetes allows to specify what kind of service you want. Following
-are the service types and their behaviors:</p>
+<p>A pod that want to consume service, can get list of endpoints and do client side loadbalancing to manage how and to which endpoint it connects. But the most common case is server side load balancing where a service endpoints are fronted by virtual ip and load balancer that load balances traffic to virtual ip to endpoints. Idea of load balancing traffic to service endpoints is integrated in to Kubernetes service defintion. Kubernetes allows to specify what kind of service you want. Following are the service types and their behaviors:</p>
 
 <ul>
 <li>ClusterIP: A service of ClusterIP type exposes the service on a cluster-internal IP. Choosing this value makes the service only reachable from within the cluster. Cluster internal IP is allocated from the cluster CIDR for the service, and acts as VIP on each node that can be reached by the pods. Cluster IP is not routable, and can be reached only by the pods running on the node.</li>
-<li>NodePort: Exposes the service on each Node’s IP at a static port (the NodePort). You’ll be able to contact the NodePort service, from outside the cluster, by requesting <NodeIP>:<NodePort>.</li>
-<li>LoadBalancer: Exposes the service externally using a cloud provider’s load balancer. NodePort and ClusterIP services, to which the external load balancer will route, are automatically created.</li>
+<li>NodePort: Exposes the service on each Node&rsquo;s IP at a static port (the NodePort). You&rsquo;ll be able to contact the NodePort service, from outside the cluster, by requesting :.</li>
+<li>LoadBalancer: Exposes the service externally using a cloud provider&rsquo;s load balancer. NodePort and ClusterIP services, to which the external load balancer will route, are automatically created.</li>
 </ul>
 
 <p>Both <em>ClusterIP</em> and <em>NodePort</em> service types are expected to create service proxy on the node, which can be accessed by the pods running on the node in case of <em>ClusterIP</em> and accessed from the cluster in case of <em>NodePort</em>. Service proxy load balances traffic to the appropriate endpoint of the service. Hopefully this explains the network requirements of Kuberntes that we discussed earlier where a pod can reach a node and vice versa.</p>
@@ -260,13 +265,11 @@ are the service types and their behaviors:</p>
 
 <h3 id="kube-proxy">kube-proxy</h3>
 
-<p>Kube-proxy is core component of Kubernetes running on each node, that uses iptables to provide a service proxy. Kube-proxy configures iptables such that both Cluster IP and Node ports are available as services on the node for the pods. Traffic is not exactly load balanced but forwarded equally to the endpoints of the service. Kube-proxy provides only L4 load balancing. Kube-proxy itself is not a mandatory component and is replaceable. It just provides out-of-box service proxy solution. If you
-want L7 load balancing between the services, or use true load balancer like HAproxy, Nginx there are community solutions (for e.g. Linkerd) that are available.</p>
+<p>Kube-proxy is core component of Kubernetes running on each node, that uses iptables to provide a service proxy. Kube-proxy configures iptables such that both Cluster IP and Node ports are available as services on the node for the pods. Traffic is not exactly load balanced but forwarded equally to the endpoints of the service. Kube-proxy provides only L4 load balancing. Kube-proxy itself is not a mandatory component and is replaceable. It just provides out-of-box service proxy solution. If you want L7 load balancing between the services, or use true load balancer like HAproxy, Nginx there are community solutions (for e.g. Linkerd) that are available.</p>
 
 <h2 id="ingress-resource-and-ingress-controller">Ingress resource and Ingress controller</h2>
 
-<p>While Kubernetes abstraction of services provide a discovery and internal load balancing for the pods with in the cluster, we need a way to expose the service externally to the internet (north-source traffic). An Ingress abstraction in Kubernetes is a collection of rules that allow inbound connections to reach the cluster services. Ingress abstraction only gives a mechanism to define the rules, but you will need an implementation of these rules, known as &lsquo;Ingress Controlles&rsquo;. Kubernetes does
-not come with a default or out-of-box ingress controller but there are third party solutions like Traefik, Nginx are available as ingress controllers. Ingress controller also provide L7 load balancing unlike cluster services.</p>
+<p>While Kubernetes abstraction of services provide a discovery and internal load balancing for the pods with in the cluster, we need a way to expose the service externally to the internet (north-source traffic). An Ingress abstraction in Kubernetes is a collection of rules that allow inbound connections to reach the cluster services. Ingress abstraction only gives a mechanism to define the rules, but you will need an implementation of these rules, known as &lsquo;Ingress Controlles&rsquo;. Kubernetes does not come with a default or out-of-box ingress controller but there are third party solutions like Traefik, Nginx are available as ingress controllers. Ingress controller also provide L7 load balancing unlike cluster services.</p>
 
 <h2 id="network-policies">Network policies</h2>
 
@@ -298,8 +301,7 @@ spec:
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>We have covered how the cross-node pod-to-pod networking works, how services are exposed with in the cluster to the pods, and externally. What makes Kubernetes networking interesting is how the design of core concepts like services, network policy ete permits several possible implementations. Though some core components and addons provide default implementation, they are totally replaceable. There whole ecosystem of network solution that plugs neatly in to Kubernetes networking
-semantics. In <a href="http://cloudnativelabs.github.io/blog/post/kube-router/">kube-router</a> blog we will walk through a solution for Kubernetes that provides cross-node pod-to-pod networking, service proxy and ingress firewall for the pods.</p>
+<p>We have covered how the cross-node pod-to-pod networking works, how services are exposed with in the cluster to the pods, and externally. What makes Kubernetes networking interesting is how the design of core concepts like services, network policy ete permits several possible implementations. Though some core components and addons provide default implementation, they are totally replaceable. There whole ecosystem of network solution that plugs neatly in to Kubernetes networking semantics. In <a href="http://cloudnativelabs.github.io/blog/post/kube-router/">kube-router</a> blog we will walk through a solution for Kubernetes that provides cross-node pod-to-pod networking, service proxy and ingress firewall for the pods.</p>
 
       </article>
 
@@ -313,26 +315,6 @@ semantics. In <a href="http://cloudnativelabs.github.io/blog/post/kube-router/">
       </ul>
 
       
-        
-          <div class="disqus-comments">
-            <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'cloudnativelabs';
-    var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-04-18-kubernetes-networking\/';
-    var disqus_title = 'Kubernetes networking';
-    var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-04-18-kubernetes-networking\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-          </div>
-        
-      
 
     </div>
   </div>
@@ -345,7 +327,7 @@ semantics. In <a href="http://cloudnativelabs.github.io/blog/post/kube-router/">
         <ul class="list-inline text-center footer-links">
           
               <li>
-                <a href="mailto:murali.reddy@cloudnativelabs.net" title="Email me">
+                <a href="mailto:info@cloudnativelabs.net" title="Email me">
                   <span class="fa-stack fa-lg">
                     <i class="fa fa-circle fa-stack-2x"></i>
                     <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
@@ -360,6 +342,15 @@ semantics. In <a href="http://cloudnativelabs.github.io/blog/post/kube-router/">
                   </span>
                 </a>
               </li>
+          
+          <li>
+            <a href="https://cloudnativelabs.github.io/index.xml" title="RSS">
+              <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
           
         </ul>
         <p class="credits copyright text-muted">
@@ -389,19 +380,6 @@ semantics. In <a href="http://cloudnativelabs.github.io/blog/post/kube-router/">
 <script> renderMathInElement(document.body); </script>
 
 
-
-
-
-
-<script>
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-ga('create', 'UA-97817717-1', 'auto');
-ga('send', 'pageview');
-</script>
 
 
 

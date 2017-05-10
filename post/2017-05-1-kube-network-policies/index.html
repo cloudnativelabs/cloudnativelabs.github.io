@@ -29,6 +29,12 @@
   <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/pygment_highlights.css" />
   <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/highlight.min.css" />
 
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97817717-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
 
 </head>
 
@@ -42,7 +48,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="https://cloudnativelabs.github.io/"></a>
+      <a class="navbar-brand" href="https://cloudnativelabs.github.io"></a>
     </div>
 
     <div class="collapse navbar-collapse" id="main-navbar">
@@ -130,10 +136,9 @@
 
 <h3 id="network-policy">network policy</h3>
 
-<p>Kubernetes network policies are application centric compared to infrastructure/network centric standard firewalls. There are no explicit CIDR or IP used for matching source or destination IP&rsquo;s.
-Network policies build up on labels and selectors which are key concepts of Kubernetes that are used to organize (for e.g all DB tier pods of app) and select subsets of objects. A typical network policy looks like below:</p>
+<p>Kubernetes network policies are application centric compared to infrastructure/network centric standard firewalls. There are no explicit CIDR or IP used for matching source or destination IP&rsquo;s. Network policies build up on labels and selectors which are key concepts of Kubernetes that are used to organize (for e.g all DB tier pods of app) and select subsets of objects. A typical network policy looks like below:</p>
 
-<pre><code class="language-text">apiVersion: extensions/v1beta1
+<pre><code class="language-:text">apiVersion: extensions/v1beta1
 kind: NetworkPolicy
 metadata:
   name: test-network-policy
@@ -155,13 +160,13 @@ spec:
      port: 6379
 </code></pre>
 
-<p>In the network policy <strong>matchLabels</strong> in  <strong>podSelector</strong> section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a <strong>matchLabels</strong> in <strong>podSelector</strong> section which identifies the set of pods that will become source pods set. Alternatively <strong>namespaceSelector</strong> in the ingress section can be used to select all pods in a namespace. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.</p>
+<p>In the network policy <strong>matchLabels</strong> in <strong>podSelector</strong> section is used to identify set of destination pods for which a network policy applies. Similarly ingress section of network policy has a <strong>matchLabels</strong> in <strong>podSelector</strong> section which identifies the set of pods that will become source pods set. Alternatively <strong>namespaceSelector</strong> in the ingress section can be used to select all pods in a namespace. Ports section of network policy spec defines one or more port and protocol combinations that are to be opened up.</p>
 
 <h3 id="evaluating-networking-policies">evaluating networking policies</h3>
 
 <p>Network policies are declarative in nature to express application intent. So its implementation of network policies responsibility to translate the intent to configuration. Kubernetes provides a convenient way to retrieve the set of pods matching a label selector through API or kubectl as shown below.</p>
 
-<pre><code class="language-text">curl 192.168.1.99:8080/api/v1/namespaces/testns1/pods?labelSelector=app%3Dguestbook,tier%3Dfrontend
+<pre><code class="language-:text">curl 192.168.1.99:8080/api/v1/namespaces/testns1/pods?labelSelector=app%3Dguestbook,tier%3Dfrontend
 kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=testns1 | jq '.items[] | .status | .podIP'
 </code></pre>
 
@@ -173,7 +178,7 @@ kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=test
 
 <p>We have seen how we can evaluate a network policy to a whitelist rules expressing set of source pod IP&rsquo;s that can reach port and protocol on set of destination pod IP&rsquo;s. A natural choice is to represent each network policy as user defined chain. A network policy evaluates to single destination pod set. But a network policy specification can have multiple ingress rules. Each ingress rule evaluates to set of pods that are source pods, port and protocol combination. Below is pseudo code how user chain for the network policy can be populated with rules to accept the traffic.</p>
 
-<pre><code class="language-text">for each dstIP in set of destination pod IP as per the podSelector in the network policy {
+<pre><code class="language-:text">for each dstIP in set of destination pod IP as per the podSelector in the network policy {
     for each ingressRule in ingress rules of network policy {
         for each srcIP in set of source pod IP as per the podSelector in $ingressRule {
             for each port, protocol combination in ports section of ingress rule of the network policy {
@@ -186,9 +191,9 @@ kubectl get pods -o json --selector=app=guestbook,tier=frontend --namespace=test
 
 <p>Since we have a rule for each source pod ip and destination pod IP combination, as you may have suspected this will blow up the chain with large number of rules. Fortunatley we can use <strong>ipset</strong> to better represent the rules and more importantly a data path that scales well. A slightly modified pseudo code to populate the rules in the chain.</p>
 
-<pre><code class="language-text">form ipset dstIpset with all destination pod ip evaluated as per the podSelector in the policy
+<pre><code class="language-:text">form ipset dstIpset with all destination pod ip evaluated as per the podSelector in the policy
 for each ingressRule in ingressRules of network policy {
-    form ipset srcIpset wth all source pod IP as evaluated as per the podSelector in ingress rule of the network policy {
+    form ipset srcIpset wth all source pod IP as evaluated as per the podSelector in ingress rule of the network policy 
     for port, protocol in ports of the network policy {
          iptables -A KUBE-NWPLCY-CHAIN -p $protocol -m set --match-set $srcIpset src -m set --match-set dstIpset dst -m $protocol --dport $port -j ACCEPT
     }
@@ -201,7 +206,7 @@ for each ingressRule in ingressRules of network policy {
 
 <p>There are multiple data paths through which packet is received by a pod as shown in below diagram.</p>
 
-<p><img src="/img/pod-ingress-traffic.jpg" alt="Pod Ingress traffic" /></p>
+<p><img src="img/pod-ingress-traffic.jpg" alt="Pod Ingress traffic" /></p>
 
 <ol>
 <li>Pod on a node reaching to pod on same node through bridge (pod2-&gt;pod3)</li>
@@ -217,7 +222,7 @@ for each ingressRule in ingressRules of network policy {
 
 <p>For the case #1 data path above we will need to use <strong>physdev</strong> module to match the traffic that is getting bridged locally. From iptables perspective it will still go through the FORWARD chain. For the case #2 from iptables perspective it is output packet, so it will only hit OUTPUT chain. Rest of the cases #3 to #5 all fall under the same category. Traffic will hit the FORWARD chain. Following is the pseudo code to populate FORWARD and OUTPUT chains to jump the traffic destined for a pod to pod specific firewall chain.</p>
 
-<pre><code class="language-text">for each pod running on the node {
+<pre><code class="language-:text">for each pod running on the node {
     if pod namespace has 'DefautDeny' as ingress type {
         iptables -A FORWARD -d $podIP -m physdev --physdev-is-bridged -j KUBE-POD-SPECIFIC-FW-CHAIN
         iptables -A FORWARD -d $podIP -j KUBE-POD-SPECIFIC-FW-CHAIN
@@ -230,7 +235,7 @@ for each ingressRule in ingressRules of network policy {
 
 <p>We will need rules in the pod specific firewall chain to take appropriate actions. First we need to have default rule as a last rule in the chain to REJECT the traffic in case traffic destined to pod does not match any white list rules in the network policy chains. We will need a rule to permit the return traffic to the pod (for the connections which originated from the pod) using conntrack. A sample set of rules in the pod specific firewall chain would look like below. Number of rules to jump to the network policy chains depends on the how many network policies are applicable to a pod.</p>
 
-<pre><code class="language-text">iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+<pre><code class="language-:text">iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN1
 iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN2
 iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN3
@@ -262,9 +267,9 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 <h3 id="conclusion">conclusion</h3>
 
-<p>We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a>. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.</p>
+<p>We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in [Kube-router][1]. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.</p>
 
-<p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="730" data-height="" data-theme="default"></div>
+<p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="720" data-height="" data-theme="default"></div>
 <script src="//cdn.jsdelivr.net/github-cards/latest/widget.js"></script></p>
 
       </article>
@@ -279,26 +284,6 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
       </ul>
 
       
-        
-          <div class="disqus-comments">
-            <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'cloudnativelabs';
-    var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-1-kube-network-policies\/';
-    var disqus_title = 'Enforcing Kubernetes network policies with iptables';
-    var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-1-kube-network-policies\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-          </div>
-        
-      
 
     </div>
   </div>
@@ -311,7 +296,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
         <ul class="list-inline text-center footer-links">
           
               <li>
-                <a href="mailto:murali.reddy@cloudnativelabs.net" title="Email me">
+                <a href="mailto:info@cloudnativelabs.net" title="Email me">
                   <span class="fa-stack fa-lg">
                     <i class="fa fa-circle fa-stack-2x"></i>
                     <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
@@ -326,6 +311,15 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
                   </span>
                 </a>
               </li>
+          
+          <li>
+            <a href="https://cloudnativelabs.github.io/index.xml" title="RSS">
+              <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
           
         </ul>
         <p class="credits copyright text-muted">
@@ -355,19 +349,6 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 <script> renderMathInElement(document.body); </script>
 
 
-
-
-
-
-<script>
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-ga('create', 'UA-97817717-1', 'auto');
-ga('send', 'pageview');
-</script>
 
 
 

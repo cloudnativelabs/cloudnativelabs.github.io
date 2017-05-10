@@ -3,12 +3,12 @@
   
   <url>
     <loc>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</loc>
-    <lastmod>2017-05-03T17:48:23+05:30</lastmod>
+    <lastmod>2017-05-03T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</loc>
-    <lastmod>2017-04-19T17:48:23+05:30</lastmod>
+    <lastmod>2017-04-19T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -18,39 +18,13 @@
   
   <url>
     <loc>https://cloudnativelabs.github.io/</loc>
-    <lastmod>2017-05-03T17:48:23+05:30</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://cloudnativelabs.github.io/page/about/</loc>
-  </url>
-  
-  <url>
-    <loc>https://cloudnativelabs.github.io/tags/kubernetes/</loc>
-    <lastmod>2017-04-18T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://cloudnativelabs.github.io/page/</loc>
+    <lastmod>2017-05-03T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://cloudnativelabs.github.io/post/</loc>
-    <lastmod>2017-05-03T17:48:23+05:30</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://cloudnativelabs.github.io/tags/sdn/</loc>
-    <lastmod>2017-04-18T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://cloudnativelabs.github.io/tags/</loc>
+    <lastmod>2017-05-03T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   

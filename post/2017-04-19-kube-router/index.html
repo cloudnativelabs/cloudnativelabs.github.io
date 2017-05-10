@@ -33,6 +33,12 @@ We will setup a Kubernetes cluster from scratch and use kube-router instead of k
   <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/pygment_highlights.css" />
   <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/highlight.min.css" />
 
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97817717-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
 
 </head>
 
@@ -46,7 +52,7 @@ We will setup a Kubernetes cluster from scratch and use kube-router instead of k
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="https://cloudnativelabs.github.io/"></a>
+      <a class="navbar-brand" href="https://cloudnativelabs.github.io"></a>
     </div>
 
     <div class="collapse navbar-collapse" id="main-navbar">
@@ -120,9 +126,9 @@ We will setup a Kubernetes cluster from scratch and use kube-router instead of k
       <article role="main" class="blog-post">
         
 
-<p>In previous <a href="https://cloudnativelabs.github.io/blog/post/kubernetes-networking/">blog</a> we went over the Kubernetes service discovery, load balancing and network policies. In this blog we will use Kube-router a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action.</p>
+<p>In previous <a href="https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/">blog</a> we went over the Kubernetes service discovery, load balancing and network policies. In this blog we will use Kube-router a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action.</p>
 
-<p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="730" data-height="" data-theme="default"></div>
+<p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="720" data-height="" data-theme="default"></div>
 <script src="//cdn.jsdelivr.net/github-cards/latest/widget.js"></script></p>
 
 <p>We will setup a Kubernetes cluster from scratch and use kube-router instead of kube-proxy and demonstrate how kube-router provides a solution for cross-node pod-to-pod networking, provides a service proxy on each node and load balances the traffic. We will also see the network policies in action.</p>
@@ -135,37 +141,37 @@ We will setup a Kubernetes cluster from scratch and use kube-router instead of k
 
 <p>On kube-master download the latest stable kubernetes master (1.6.1 at the point of writing this blog) components from below URL&rsquo;s</p>
 
-<pre><code>curl -O https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kube-apiserver
+<pre><code class="language-:text">curl -O https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kube-apiserver
 curl -O https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kube-controller-manager
 curl -O https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kube-scheduler
 </code></pre>
 
 <p>We will assume etcd is installed on the kube-master and Docker is installed on all the nodes kube-node1, kube-node2, kube-node3.</p>
 
-<p>On kube-master node provide appropriate etcd details for the &lsquo;&ndash;etcd-servers&rsquo; flag when running Kube-apiserver. Run below Kubernetes components on kube-master as below. We will use 172.16.0.0/16 as cluster IP range. As we will see IP&rsquo;s from cluster ip range will be allocated for services.</p>
+<p>On kube-master node provide appropriate etcd details for the &lsquo;–etcd-servers&rsquo; flag when running Kube-apiserver. Run below Kubernetes components on kube-master as below. We will use 172.16.0.0/16 as cluster IP range. As we will see IP&rsquo;s from cluster ip range will be allocated for services.</p>
 
-<p>Kube-router will not do subnet management and depends on the kube-controller-manager to do subnet allocation for the nodes from cluster CIDR range. So we will launch kube-controller-manager with <code>kube-controller-manager</code> and <code>--allocate-node-cidrs</code> flags. Also inorder to run kube-router in the host namespace when run as daemonset, we will allow kubernetes to privision pods in the host namespace by passing <code>--allow-privileged=true</code> falg to kube-apiserver.</p>
+<p>Kube-router will not do subnet management and depends on the kube-controller-manager to do subnet allocation for the nodes from cluster CIDR range. So we will launch kube-controller-manager with <code>kube-controller-manager</code> and <code>\--allocate-node-cidrs</code> flags. Also inorder to run kube-router in the host namespace when run as daemonset, we will allow kubernetes to privision pods in the host namespace by passing <code>\--allow-privileged=true</code> falg to kube-apiserver.</p>
 
-<pre><code>nohup kube-apiserver --etcd-servers=http://127.0.0.1:2379 --insecure-bind-address=192.168.1.99 --service-cluster-ip-range=172.16.0.0/16 --allow-privileged=true &gt; /dev/null 2&gt;&amp;1 &amp;
+<pre><code class="language-:text">nohup kube-apiserver --etcd-servers=http://127.0.0.1:2379 --insecure-bind-address=192.168.1.99 --service-cluster-ip-range=172.16.0.0/16 --allow-privileged=true &gt; /dev/null 2&gt;&amp;1 &amp;
 nohup kube-controller-manager --master=http://192.168.1.99:8080 --cluster-cidr=10.1.0.0/16 --allocate-node-cidrs=true  &gt; /dev/null 2&gt;&amp;1 &amp;
 nohup kube-scheduler --master=http://192.168.1.99:8080  &gt; /dev/null 2&gt;&amp;1 &amp;
 </code></pre>
 
 <p>On each of the nodes (kube-node1, kube-node2, kube-node3) download the stable kubelet.</p>
 
-<pre><code>curl -O https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kubelet
+<pre><code class="language-:text">curl -O https://storage.googleapis.com/kubernetes-release/release/v1.6.1/bin/linux/amd64/kubelet
 </code></pre>
 
 <p>Download the CNI plugins from <code>https://github.com/containernetworking/cni/releases</code> and extract them in to /opt/cni/bin folder on each of the nodes (kube-node1, kube-node2, kube-node3).</p>
 
 <p>On each node create CNI conf file at <code>/etc/cni/net.d/10-kuberouter.conf</code> by running</p>
 
-<pre><code>wget -O /etc/cni/net.d/10-kuberouter.conf https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/cni/10-kuberouter.conf
+<pre><code class="language-:text">wget -O /etc/cni/net.d/10-kuberouter.conf https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/cni/10-kuberouter.conf
 </code></pre>
 
 <p>or create manually with below content. Kube-router will require to use <code>bridge</code> CNI plugin, and <code>host-local</code> plugin for IPAM. Subnet details need not be specified as kube-controller-manager automatically does the subnet allocation for the nodes.</p>
 
-<pre><code>{
+<pre><code class="language-:text">{
   &quot;name&quot;: &quot;mynet&quot;,
   &quot;type&quot;: &quot;bridge&quot;,
   &quot;bridge&quot;: &quot;kube-bridge&quot;,
@@ -176,9 +182,9 @@ nohup kube-scheduler --master=http://192.168.1.99:8080  &gt; /dev/null 2&gt;&amp
 }
 </code></pre>
 
-<p>On each node launch kubelet as below. We need to pass on location of CNI plugins for the <code>--network-plugin-dir</code> flag, and CNI conf file location for <code>--cni-conf-dir</code>. We need to run kubelet with <code>--allow-privileged</code> flag set to true so that kube-router can be launched pod in host namespace.</p>
+<p>On each node launch kubelet as below. We need to pass on location of CNI plugins for the <code>\--network-plugin-dir</code> flag, and CNI conf file location for <code>\--cni-conf-dir</code>. We need to run kubelet with <code>\--allow-privileged</code> flag set to true so that kube-router can be launched pod in host namespace.</p>
 
-<pre><code>nohup kubelet --api-servers=http://192.168.1.99:8080  --network-plugin-dir=/opt/cni/bin  --network-plugin=cni --cni-conf-dir=/etc/cni/net.d/ --allow-privileged=true &gt; /dev/null 2&gt;&amp;1 &amp;
+<pre><code class="language-:text">nohup kubelet --api-servers=http://192.168.1.99:8080  --network-plugin-dir=/opt/cni/bin  --network-plugin=cni --cni-conf-dir=/etc/cni/net.d/ --allow-privileged=true &gt; /dev/null 2&gt;&amp;1 &amp;
 </code></pre>
 
 <p>Ok, now the cluster is setup almost. We will use Kube-router instead of Kube-proxy to complete the cluster setup. We have two options to run Kube-router.</p>
@@ -187,33 +193,33 @@ nohup kube-scheduler --master=http://192.168.1.99:8080  &gt; /dev/null 2&gt;&amp
 
 <p>Build the kube-router from the sources.</p>
 
-<pre><code>git clone https://github.com/cloudnativelabs/kube-router.git
+<pre><code class="language-:text">git clone https://github.com/cloudnativelabs/kube-router.git
 go build --ldflags '-extldflags &quot;-static&quot;' -o kube-router kube-router.go
 </code></pre>
 
 <p>Alternativley you can download prebuilt binary:</p>
 
-<pre><code>wget https://github.com/cloudnativelabs/kube-router/releases/download/v0.0.1/kube-router
+<pre><code class="language-:text">wget https://github.com/cloudnativelabs/kube-router/releases/download/v0.0.1/kube-router
 chmod +x kube-router
 </code></pre>
 
 <p>Run kube-router on all nodes as below. We will use kube-router to provide pod-to-pod networking, service proxy and firewall for the pods.</p>
 
-<pre><code>kube-router --master=http://192.168.1.99:8080/ --run-router=true --run-firewall=true --run-service-proxy=true
+<pre><code class="language-:text">kube-router --master=http://192.168.1.99:8080/ --run-router=true --run-firewall=true --run-service-proxy=true
 </code></pre>
 
 <h3 id="run-kube-router-as-deamonset">run Kube-router as deamonset</h3>
 
 <p>This is quickest way to deploy kube-router. Just run</p>
 
-<pre><code>kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kube-router-all-service-daemonset.yaml
+<pre><code class="language-:text">kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kube-router-all-service-daemonset.yaml
 </code></pre>
 
 <p>Above will run kube-router as pod on each node automatically.</p>
 
 <p>Now the cluster is setup with Kube-router providing service proxy, pod ingress firewall and for pod networking. Let see the demo how Kube-router provide these functionality.</p>
 
-<p><a href="https://asciinema.org/a/118056"><img src="https://asciinema.org/a/118056.png" alt="asciicast" /></a></p>
+<p><img src="https://asciinema.org/a/118056.png" alt="asciicast" /></p>
 
 <h3 id="conclusion">conclusion</h3>
 
@@ -224,7 +230,7 @@ chmod +x kube-router
       <ul class="pager blog-pager">
         
           <li class="previous">
-            <a href="https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/" data-toggle="tooltip" data-placement="top" title="Kubernetes networking">&larr; Previous Post</a>
+            <a href="https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/" data-toggle="tooltip" data-placement="top" title="Kubernetes Networking">&larr; Previous Post</a>
           </li>
         
         
@@ -234,26 +240,6 @@ chmod +x kube-router
         
       </ul>
 
-      
-        
-          <div class="disqus-comments">
-            <div id="disqus_thread"></div>
-<script type="text/javascript">
-    var disqus_shortname = 'cloudnativelabs';
-    var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-04-19-kube-router\/';
-    var disqus_title = 'Kube-router';
-    var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-04-19-kube-router\/';
-
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-          </div>
-        
       
 
     </div>
@@ -267,7 +253,7 @@ chmod +x kube-router
         <ul class="list-inline text-center footer-links">
           
               <li>
-                <a href="mailto:murali.reddy@cloudnativelabs.net" title="Email me">
+                <a href="mailto:info@cloudnativelabs.net" title="Email me">
                   <span class="fa-stack fa-lg">
                     <i class="fa fa-circle fa-stack-2x"></i>
                     <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
@@ -282,6 +268,15 @@ chmod +x kube-router
                   </span>
                 </a>
               </li>
+          
+          <li>
+            <a href="https://cloudnativelabs.github.io/index.xml" title="RSS">
+              <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
           
         </ul>
         <p class="credits copyright text-muted">
@@ -311,19 +306,6 @@ chmod +x kube-router
 <script> renderMathInElement(document.body); </script>
 
 
-
-
-
-
-<script>
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-ga('create', 'UA-97817717-1', 'auto');
-ga('send', 'pageview');
-</script>
 
 
 
