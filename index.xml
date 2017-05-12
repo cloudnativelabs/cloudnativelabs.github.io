@@ -7,8 +7,105 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>info@cloudnativelabs.net (Cloudnative Labs)</managingEditor>
     <webMaster>info@cloudnativelabs.net (Cloudnative Labs)</webMaster>
-    <lastBuildDate>Wed, 03 May 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 12 May 2017 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://cloudnativelabs.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Kubernetes network services proxy with IPVS/LVS</title>
+      <link>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</link>
+      <pubDate>Fri, 12 May 2017 00:00:00 +0000</pubDate>
+      <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
+      <guid>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</guid>
+      <description>
+
+&lt;p&gt;A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &amp;lsquo;ClusterIP&amp;rsquo; and &amp;lsquo;NodePort&amp;rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &amp;lsquo;Kube-proxy&amp;rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not neccessarily an optimal solution for all users.
+In this blog we will go over an implementation of Kubernetes network services proxy built on top of Linux IPVS in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;.
+We will also go over pros and cons of Kube-proxy which is based on iptables and compare it aginest in general any implemenation of IPVS/LVS based network service proxy for Kubernetes.&lt;/p&gt;
+
+&lt;h3 id=&#34;tl-dr&#34;&gt;TL;DR&lt;/h3&gt;
+
+&lt;p&gt;Please see the demo to get the feel for IPVS in action as service proxy for Kubernetes as implemented in Kube-router.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/120312&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/120312.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Lets delve into the details now.&lt;/p&gt;
+
+&lt;h3 id=&#34;clusterip-and-nodeport-services&#34;&gt;ClusterIP and NodePort services&lt;/h3&gt;
+
+&lt;p&gt;Each Service of type &amp;lsquo;ClusterIP&amp;rsquo; and &amp;lsquo;NodePort&amp;rsquo;is assigned a unique IP address (called as clusterIP) throught the lifespan of the Service. Pods can be configured to talk to the Service through cluster IP and know that communication to the Service will be automatically load-balanced out to some pod that is a member of the Service.
+Additionally for the Service of &amp;ldquo;NodePort&amp;rdquo; type, the Kubernetes master will allocate a port from a flag-configured range (default: 30000-32767), and each Node will proxy that port (the same port number on every Node) into your Service.&lt;/p&gt;
+
+&lt;h3 id=&#34;ipvs&#34;&gt;IPVS&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://kb.linuxvirtualserver.org/wiki/IPVS&#34;&gt;IPVS (IP Virtual Server)&lt;/a&gt; implements transport-layer (L4) load balancing inside the Linux kernel. IPVS running on a host acts as a load balancer at the front of a cluster of real servers, it can direct requests for TCP/UDP based services to the real servers, and makes services of the real servers to appear as a virtual service on a single IP address. IPVS support rich set of connection scheduling algorithms (Round-Robin, Weighted Round-Robin, Least-Connection etc.) inside the Linux kernel.
+IPVS is known to be fast as its implemented in Kernel and provides different IP load balancing techniques (NAT, TUN and LVS/DR).&lt;/p&gt;
+
+&lt;h3 id=&#34;kubernetes-service-proxy-with-ipvs&#34;&gt;Kubernetes service proxy with IPVS&lt;/h3&gt;
+
+&lt;p&gt;As we learned earlier each of the Kubernetes service of type ClusterIP and NodePort needs L4 load balancer and service proxy on each of the cluster node. Kubernetes notion of Service and Endpoints logically can be mapped cleanly to IPVS virtual service and server notions. With IPVS doing heavy lifting its fairly easy to implement a soltion for Kubernetes that provides service proxy for ClusterIP and NodePort services. We just need a agent running on each of cluster node that watches
+Kubernetes API server for changes to Services and Endpoints and reflect desired state in IPVS.&lt;/p&gt;
+
+&lt;h3 id=&#34;kube-router-implementation-of-service-proxy-with-ipvs&#34;&gt;Kube-router implementation of service proxy with IPVS&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt; has an implementation of IPVS based service proxy for ClusterIP and NodePort services. Kube-router watches Kubernetes API server for changes (add/delete/updates) to Services and Endpoints objects and configures IPVS virtual service and servers. While mapping of Service and Endpoints to IPVS virtual service and server is stright forward, there are some challenges due to Kubernetes networking model.&lt;/p&gt;
+
+&lt;h4 id=&#34;cluster-ip&#34;&gt;cluster ip&lt;/h4&gt;
+
+&lt;p&gt;Typically Cluster IP&amp;rsquo;a are not routable (not a hard restriction from Kubernetes and one can hook up these IP in to the their non-cluster routing environment). A Cluster IP will be shared by all the nodes in the cluster. At the bare minimul the pods on the node need to be able to access the cluster IP. Kube-router solves the problem by having dummy interface on each node which will be exclusiveley used to assign cluster IP&amp;rsquo;s. Once IP is assigned to the node, pods on the node can
+connect to the cluster IP&amp;rsquo;s. Traffic to cluster IP originating external to the nodes are not dropped by default.&lt;/p&gt;
+
+&lt;h4 id=&#34;reverse-traffic&#34;&gt;reverse traffic&lt;/h4&gt;
+
+&lt;p&gt;Kube-router uses IPVS NAT mode for load balancing technique. Like any load balancing mechanism based on DNAT, reverse path traffic need to go through the load balancer for end-to-end functioning. There are two data paths thats needs to meet this requirement. For the traffic originating from the pods on the node, only destanation NAT is performed. Since Kube-router uses host-based routing for pod-to-pod networking, revese path traffic goes through the same node from which traffic originated. Traffic originating external to
+cluster and accessing node ports needs masqurading traffic so that SNAT is performed. On the reverse path, traffic goes through the same node as due to SNAT.&lt;/p&gt;
+
+&lt;h4 id=&#34;ipvs-conntrack&#34;&gt;ipvs conntrack&lt;/h4&gt;
+
+&lt;p&gt;IPVS uses its own simple and fast connection tracking for performance reasons, instead of using netfilter connection tracking. Kube-router enables IPVS connection tracking.&lt;/p&gt;
+
+&lt;h3 id=&#34;kube-proxy&#34;&gt;Kube-proxy&lt;/h3&gt;
+
+&lt;p&gt;Kube-proxy is a network proxy service that runs on each cluster node and proxies L4 sessions to service VIP (service cluster ip) or node port to the back end pods in round robin fashion. Kube-proxy is built on top of iptables functionality in Linux.&lt;/p&gt;
+
+&lt;h4 id=&#34;pros&#34;&gt;pros&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;leverages iptables, so pretty much any functionality (SNAT, DNAT, port translation etc) can be achiveved. Maniputlate packet at different stages (pre-routing, post routing, input, forward, output etc) can be done&lt;/li&gt;
+&lt;li&gt;supports port ranges&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;cons&#34;&gt;cons&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;arcane implementation of load balancer, hard to troubleshoot anything with out understanding the how Kube-proxy uses iptables to implement load balancer&lt;/li&gt;
+&lt;li&gt;not a true load balancer but a simple round robin forwarder&lt;/li&gt;
+&lt;li&gt;no load balancing mechanisms&lt;/li&gt;
+&lt;li&gt;iptable performance degrades as number of services increases. More number of services means long list of iptable rules in a chain to match a packet aginest in the data path, and latency in insert/delete rules in control path&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;ipvs-lvs-based-service-proxy&#34;&gt;IPVS/LVS based service proxy&lt;/h3&gt;
+
+&lt;h4 id=&#34;pros-1&#34;&gt;pros&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;hash based matching vs list based iptables rules in the chains.&lt;/li&gt;
+&lt;li&gt;biggest advantage is easy to verify configuration with ipvsadm&lt;/li&gt;
+&lt;li&gt;been around for long time in linux kernel and widely used&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;cons-1&#34;&gt;cons&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;still need iptable tweeks to achive masqurading etc&lt;/li&gt;
+&lt;li&gt;direct routing does not handle port remapping. So direct routing which is the fastest of load balancing algorithm can not be used&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
+
+&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
+&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Enforcing Kubernetes network policies with iptables</title>
