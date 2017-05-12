@@ -102,6 +102,8 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 
 &lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
 
+&lt;p&gt;An IPVS based service proxy for Kubernetes deployment is a practical option. Its fast, scales well, batlle tested also easier to verify and troubleshoot. Unless there are special needs (like support of port ranges) which can be met only with iptables based Kube-proxy, an IPVS based service proxy is better option. Since we are building on top of solid fundation which does heavy lifiting a solution can implemented few hundred lines of code and less error prone.&lt;/p&gt;
+
 &lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
 &lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
 </description>
