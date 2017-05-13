@@ -2,20 +2,20 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title></title>
-    <link>http://cloudnativelabs.net/index.xml</link>
+    <link>https://cloudnativelabs.github.io/index.xml</link>
     <description>Recent content on </description>
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>info@cloudnativelabs.net (Cloudnative Labs)</managingEditor>
     <webMaster>info@cloudnativelabs.net (Cloudnative Labs)</webMaster>
     <lastBuildDate>Fri, 12 May 2017 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://cloudnativelabs.net/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://cloudnativelabs.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Kubernetes network services proxy with IPVS/LVS</title>
-      <link>http://cloudnativelabs.net/post/2017-05-10-kube-network-service-proxy/</link>
+      <link>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</link>
       <pubDate>Fri, 12 May 2017 00:00:00 +0000</pubDate>
       <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
-      <guid>http://cloudnativelabs.net/post/2017-05-10-kube-network-service-proxy/</guid>
+      <guid>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</guid>
       <description>
 
 &lt;p&gt;A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &amp;lsquo;ClusterIP&amp;rsquo; and &amp;lsquo;NodePort&amp;rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &amp;lsquo;Kube-proxy&amp;rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not necessarily an optimal solution for all users.
@@ -111,10 +111,10 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
     
     <item>
       <title>Enforcing Kubernetes network policies with iptables</title>
-      <link>http://cloudnativelabs.net/post/2017-05-1-kube-network-policies/</link>
+      <link>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</link>
       <pubDate>Wed, 03 May 2017 00:00:00 +0000</pubDate>
       <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
-      <guid>http://cloudnativelabs.net/post/2017-05-1-kube-network-policies/</guid>
+      <guid>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</guid>
       <description>
 
 &lt;p&gt;Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. But concepts described can be used to build your own version of network policy enforcer with iptables.&lt;/p&gt;
@@ -201,7 +201,7 @@ for each ingressRule in ingressRules of network policy {
 
 &lt;p&gt;There are multiple data paths through which packet is received by a pod as shown in below diagram.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/pod-ingress-traffic.jpg&#34; alt=&#34;Pod Ingress traffic&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/pod-ingress-traffic.jpg&#34; alt=&#34;Pod Ingress traffic&#34; /&gt;&lt;/p&gt;
 
 &lt;ol&gt;
 &lt;li&gt;Pod on a node reaching to pod on same node through bridge (pod2-&amp;gt;pod3)&lt;/li&gt;
@@ -271,10 +271,10 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
     
     <item>
       <title>Kube-router</title>
-      <link>http://cloudnativelabs.net/post/2017-04-19-kube-router/</link>
+      <link>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</link>
       <pubDate>Wed, 19 Apr 2017 00:00:00 +0000</pubDate>
       <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
-      <guid>http://cloudnativelabs.net/post/2017-04-19-kube-router/</guid>
+      <guid>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</guid>
       <description>
 
 &lt;p&gt;In previous &lt;a href=&#34;https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/&#34;&gt;blog&lt;/a&gt; we went over the Kubernetes service discovery, load balancing and network policies. In this blog we will use Kube-router a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action.&lt;/p&gt;
@@ -288,7 +288,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 &lt;p&gt;We will setup a 3 node kube-node1 (192.168.1.100), kube-node2 (192.168.1.101), kube-node3 (192.168.1.102) as a cluster nodes and use kube-master (192.168.1.99) as Kubernetes master node. Master and nodes are in subnet 192.168.1.0/24. We will use 10.1.0.0/16 ip range for pod ip&amp;rsquo;s with Kube-node1, kube-node2 and kube-node3 using 10.1.1.0/24, 10.1.2.0/24 and 10.1.3.0/24 subnets respectively as shown in below diagram.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/demo-setup.jpg&#34; alt=&#34;Demo setup&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/demo-setup.jpg&#34; alt=&#34;Demo setup&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;On kube-master download the latest stable kubernetes master (1.6.1 at the point of writing this blog) components from below URL&amp;rsquo;s&lt;/p&gt;
 
@@ -380,10 +380,10 @@ chmod +x kube-router
     
     <item>
       <title>Kubernetes Networking</title>
-      <link>http://cloudnativelabs.net/post/2017-04-18-kubernetes-networking/</link>
+      <link>https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/</link>
       <pubDate>Tue, 18 Apr 2017 00:00:00 +0000</pubDate>
       <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
-      <guid>http://cloudnativelabs.net/post/2017-04-18-kubernetes-networking/</guid>
+      <guid>https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/</guid>
       <description>
 
 &lt;p&gt;This article gives brief overview of fundamnetal networking concepts in Kubernetes.&lt;/p&gt;
@@ -414,7 +414,7 @@ chmod +x kube-router
 
 &lt;p&gt;For the illustration of these requirements let us use a cluster with two cluster nodes. Nodes are in subnet 192.168.1.0/24 and pods use 10.1.0.0/16 subnet, with 10.1.1.0/24 and 10.1.2.0/24 used by node1 and node2 respectively for the pod IP&amp;rsquo;s.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/kube-network-requirement.jpg&#34; alt=&#34;Network requirements&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/kube-network-requirement.jpg&#34; alt=&#34;Network requirements&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;So from above Kubernetes requirements following communication paths must be established by the network.&lt;/p&gt;
 
@@ -454,7 +454,7 @@ chmod +x kube-router
 
 &lt;p&gt;kube-bridge need to be pre-created such that ARP packets go out on the physical interface. In order for that we have another bridge with physical interface connected to it and node ip assigned to it to which kube-bridge is hooked through the veth pair like below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/l2-network.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/l2-network.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;We can pass a bridge which is pre-created, in which case &lt;strong&gt;bridge&lt;/strong&gt; CNI plugin will reuse the bridge, only change it would do is to configure gateway for the interface.&lt;/p&gt;
 
@@ -478,17 +478,17 @@ chmod +x kube-router
 
 &lt;p&gt;We could populate default gateway router with routes for the subnet as shown in the below diagram. Route to 10.1.1.0/24 and 10.1.2.0/24 is configured to be through node1 and node2 respectively. We could automate keeping the route tables updated as nodes are added or deleted in to the cluster. We can also use some of the container networking solutions which can do the job on public clouds, for e.g. Flannel back end for AWS and GCE, Weaves AWS-VPC mode etc.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/l3-gateway-routing.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/l3-gateway-routing.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Alternativley each node can be populated with routes to the other subnets as shown in the below diagram. Again updating the routes can be automated in small/static environment as nodes are added/deleted in the cluster. Or container networking solutions like calico, or Flannel host gateway back end can be used to achieve same.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/l3-host-routing.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/l3-host-routing.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
 
 &lt;h4 id=&#34;overlay-solutions&#34;&gt;overlay solutions&lt;/h4&gt;
 
 &lt;p&gt;Unless there is a specific reason an overlay solution for Kubernetes does not make sense considering the networking model of Kubernetes and lack of support for multiple networks. Kubernets requires that nodes should be able to reach pod, even though pods are in overlay network. Similarly pod should be able to reach any node as well. We will need host routes in the nodes set such that pods and nodes can talk to each other. Since inter host pod-to-pod traffic should not be visible in the underlay, we need a virtual/logical network that is overlaid on the underlay. Pod-to-pod traffic need to be encapsulated at the source node. The encapsulated packet is then forwarded to destination node where it is de-encapsulated. A solution can be built around any existing Linux encapsulation mechanisms. We need to have tunnel interface (with VXLAN, GRE etc encapsulation) and host route such that inter node pod-to-pod traffic is routed through the tunnel interface. Below is very generalized view of how a overlay solution can be built that can meet Kubernetes network requirements. Unlike previous solutions there is significant effort in overlay approach setting up tunnels, populating FDB etc. Existing container networking solutions like Weave, Flannel can be used to setup a Kubernetes deployment with overlay networks.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/overlay.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/overlay.jpg&#34; alt=&#34;image alt &amp;lt;&amp;gt;&#34; /&gt;&lt;/p&gt;
 
 &lt;h2 id=&#34;service-discovery-and-load-balancing&#34;&gt;service discovery and load balancing&lt;/h2&gt;
 
@@ -502,11 +502,11 @@ chmod +x kube-router
 
 &lt;p&gt;Lets walk through an example. In the below example first we created 2 pods each marked with label &amp;lsquo;app=nginx&amp;rsquo; and expose port 80. We created a service with selector matching labels &amp;lsquo;app=nginx&amp;rsquo;.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/svc1.png&#34; alt=&#34;pod and service selector&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/svc1.png&#34; alt=&#34;pod and service selector&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;As you can see both the pods selected as endpoints for the service.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://cloudnativelabs.net/img/svc2.png&#34; alt=&#34;service and endpoints&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/svc2.png&#34; alt=&#34;service and endpoints&#34; /&gt;&lt;/p&gt;
 
 &lt;h3 id=&#34;exposing-service&#34;&gt;exposing service&lt;/h3&gt;
 

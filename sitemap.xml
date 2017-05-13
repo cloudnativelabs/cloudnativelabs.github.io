@@ -2,33 +2,33 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://cloudnativelabs.net/post/2017-05-10-kube-network-service-proxy/</loc>
+    <loc>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</loc>
     <lastmod>2017-05-12T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>http://cloudnativelabs.net/post/2017-05-1-kube-network-policies/</loc>
+    <loc>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</loc>
     <lastmod>2017-05-03T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>http://cloudnativelabs.net/post/2017-04-19-kube-router/</loc>
+    <loc>https://cloudnativelabs.github.io/post/2017-04-19-kube-router/</loc>
     <lastmod>2017-04-19T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>http://cloudnativelabs.net/post/2017-04-18-kubernetes-networking/</loc>
+    <loc>https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/</loc>
     <lastmod>2017-04-18T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>http://cloudnativelabs.net/</loc>
+    <loc>https://cloudnativelabs.github.io/</loc>
     <lastmod>2017-05-12T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://cloudnativelabs.net/post/</loc>
+    <loc>https://cloudnativelabs.github.io/post/</loc>
     <lastmod>2017-05-12T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
