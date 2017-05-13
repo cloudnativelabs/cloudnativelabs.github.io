@@ -192,9 +192,9 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 <h4 id="pros-1">pros</h4>
 
 <ul>
-<li>hash based matching vs list based iptables rules in the chains.</li>
+<li>hash based matching vs list based iptables rules in the chains. As number of services and endpoints increases, hash based matching of IPVS will be consistent, where as iptables based Kube-proxy will have performance degradation.</li>
 <li>biggest advantage is easy to verify configuration with ipvsadm</li>
-<li>been around for long time in linux kernel and widely used</li>
+<li>been around for long time in linux kernel and widely used.</li>
 </ul>
 
 <h4 id="cons-1">cons</h4>
