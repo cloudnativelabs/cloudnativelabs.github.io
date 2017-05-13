@@ -8,8 +8,8 @@
   <title>Kubernetes network services proxy with IPVS/LVS</title>
   <meta property="og:title" content="Kubernetes network services proxy with IPVS/LVS" />
   <meta name="twitter:title" content="Kubernetes network services proxy with IPVS/LVS" />
-  <meta name="description" content="A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and &lsquo;NodePort&rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &lsquo;Kube-proxy&rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not neccessarily an optimal solution for all users.">
-  <meta property="og:description" content="A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and &lsquo;NodePort&rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &lsquo;Kube-proxy&rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not neccessarily an optimal solution for all users.">
+  <meta name="description" content="A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and &lsquo;NodePort&rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &lsquo;Kube-proxy&rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not necessarily an optimal solution for all users.">
+  <meta property="og:description" content="A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and &lsquo;NodePort&rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &lsquo;Kube-proxy&rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not necessarily an optimal solution for all users.">
   <meta name="twitter:description" content="A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and …">
   <meta name="author" content="Cloudnative Labs"/>
   <meta name="twitter:card" content="summary" />
@@ -122,9 +122,9 @@ ga('send', 'pageview');
       <article role="main" class="blog-post">
         
 
-<p>A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and &lsquo;NodePort&rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &lsquo;Kube-proxy&rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not neccessarily an optimal solution for all users.
+<p>A Kubernetes Service is an abstraction which groups a logical set of Pods that provide the same functionality. A service in Kubernetes can be of different types, of which &lsquo;ClusterIP&rsquo; and &lsquo;NodePort&rsquo; types forms basis for service discovery and load balancing. Both of the service types requires a service proxy running on each of the cluster node. Kubernetes has an implementation of service proxy &lsquo;Kube-proxy&rsquo; based on iptables. While Kube-proxy provides out-of-box solution its not necessarily an optimal solution for all users.
 In this blog we will go over an implementation of Kubernetes network services proxy built on top of Linux IPVS in <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a>.
-We will also go over pros and cons of Kube-proxy which is based on iptables and compare it aginest in general any implemenation of IPVS/LVS based network service proxy for Kubernetes.</p>
+We will also go over pros and cons of Kube-proxy which is based on iptables and compare it against in general any implementation of IPVS/LVS based network service proxy for Kubernetes.</p>
 
 <h3 id="tl-dr">TL;DR</h3>
 
@@ -146,21 +146,21 @@ IPVS is known to be fast as its implemented in Kernel and provides different IP 
 
 <h3 id="kubernetes-service-proxy-with-ipvs">Kubernetes service proxy with IPVS</h3>
 
-<p>As we learned earlier each of the Kubernetes service of type ClusterIP and NodePort needs L4 load balancer and service proxy on each of the cluster node. Kubernetes notion of Service and Endpoints logically can be mapped cleanly to IPVS virtual service and server notions. With IPVS doing heavy lifting its fairly easy to implement a soltion for Kubernetes that provides service proxy for ClusterIP and NodePort services. We just need a agent running on each of cluster node that watches
+<p>As we learned earlier each of the Kubernetes service of type ClusterIP and NodePort needs L4 load balancer and service proxy on each of the cluster node. Kubernetes notion of Service and Endpoints logically can be mapped cleanly to IPVS virtual service and server notions. With IPVS doing heavy lifting its fairly easy to implement a solution for Kubernetes that provides service proxy for ClusterIP and NodePort services. We just need a agent running on each of cluster node that watches
 Kubernetes API server for changes to Services and Endpoints and reflect desired state in IPVS.</p>
 
 <h3 id="kube-router-implementation-of-service-proxy-with-ipvs">Kube-router implementation of service proxy with IPVS</h3>
 
-<p><a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> has an implementation of IPVS based service proxy for ClusterIP and NodePort services. Kube-router watches Kubernetes API server for changes (add/delete/updates) to Services and Endpoints objects and configures IPVS virtual service and servers. While mapping of Service and Endpoints to IPVS virtual service and server is stright forward, there are some challenges due to Kubernetes networking model.</p>
+<p><a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> has an implementation of IPVS based service proxy for ClusterIP and NodePort services. Kube-router watches Kubernetes API server for changes (add/delete/updates) to Services and Endpoints objects and configures IPVS virtual service and servers. While mapping of Service and Endpoints to IPVS virtual service and server is straight forward, there are some challenges.</p>
 
 <h4 id="cluster-ip">cluster ip</h4>
 
-<p>Typically Cluster IP&rsquo;a are not routable (not a hard restriction from Kubernetes and one can hook up these IP in to the their non-cluster routing environment). A Cluster IP will be shared by all the nodes in the cluster. At the bare minimul the pods on the node need to be able to access the cluster IP. Kube-router solves the problem by having dummy interface on each node which will be exclusiveley used to assign cluster IP&rsquo;s. Once IP is assigned to the node, pods on the node can
+<p>Typically Cluster IP&rsquo;a are not routable (not a hard restriction from Kubernetes and one can hook up these IP in to the their non-cluster routing environment). A Cluster IP will be shared by all the nodes in the cluster. At the bare minimum the pods on the node need to be able to access the cluster IP. Kube-router solves the problem by having dummy interface on each node which will be exclusively used to assign cluster IP&rsquo;s. Once IP is assigned to the node, pods on the node can
 connect to the cluster IP&rsquo;s. Traffic to cluster IP originating external to the nodes are not dropped by default.</p>
 
 <h4 id="reverse-traffic">reverse traffic</h4>
 
-<p>Kube-router uses IPVS NAT mode for load balancing technique. Like any load balancing mechanism based on DNAT, reverse path traffic need to go through the load balancer for end-to-end functioning. There are two data paths thats needs to meet this requirement. For the traffic originating from the pods on the node, only destanation NAT is performed. Since Kube-router uses host-based routing for pod-to-pod networking, revese path traffic goes through the same node from which traffic originated. Traffic originating external to
+<p>Kube-router uses IPVS NAT mode for load balancing technique. Like any load balancing mechanism based on DNAT, reverse path traffic need to go through the load balancer for end-to-end functioning. There are two data paths thats needs to meet this requirement. For the traffic originating from the pods on the node, only destination NAT is performed. Since Kube-router uses host-based routing for pod-to-pod networking, reverse path traffic goes through the same node from which traffic originated. Traffic originating external to
 cluster and accessing node ports needs masqurading traffic so that SNAT is performed. On the reverse path, traffic goes through the same node as due to SNAT.</p>
 
 <h4 id="ipvs-conntrack">ipvs conntrack</h4>
@@ -174,7 +174,7 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 <h4 id="pros">pros</h4>
 
 <ul>
-<li>leverages iptables, so pretty much any functionality (SNAT, DNAT, port translation etc) can be achiveved. Maniputlate packet at different stages (pre-routing, post routing, input, forward, output etc) can be done</li>
+<li>leverages iptables, so pretty much any functionality (SNAT, DNAT, port translation etc) can be achieved. Maniputlate packet at different stages (pre-routing, post routing, input, forward, output etc) can be done</li>
 <li>supports port ranges</li>
 </ul>
 
@@ -184,7 +184,7 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 <li>arcane implementation of load balancer, hard to troubleshoot anything with out understanding the how Kube-proxy uses iptables to implement load balancer</li>
 <li>not a true load balancer but a simple round robin forwarder</li>
 <li>no load balancing mechanisms</li>
-<li>iptable performance degrades as number of services increases. More number of services means long list of iptable rules in a chain to match a packet aginest in the data path, and latency in insert/delete rules in control path</li>
+<li>iptable performance degrades as number of services increases. More number of services means long list of iptable rules in a chain to match a packet against in the data path, and latency in insert/delete rules in control path</li>
 </ul>
 
 <h3 id="ipvs-lvs-based-service-proxy">IPVS/LVS based service proxy</h3>
@@ -200,13 +200,13 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 <h4 id="cons-1">cons</h4>
 
 <ul>
-<li>still need iptable tweeks to achive masqurading etc</li>
+<li>still need iptable tweeks to achieve masqurading etc</li>
 <li>direct routing does not handle port remapping. So direct routing which is the fastest of load balancing algorithm can not be used</li>
 </ul>
 
 <h3 id="conclusion">conclusion</h3>
 
-<p>An IPVS based service proxy for Kubernetes deployment is a practical option. Its fast, scales well, batlle tested also easier to verify and troubleshoot. Unless there are special needs (like support of port ranges) which can be met only with iptables based Kube-proxy, an IPVS based service proxy is better option. Since we are building on top of solid fundation which does heavy lifiting a solution can implemented few hundred lines of code and less error prone.</p>
+<p>An IPVS based service proxy for Kubernetes deployment is a practical option. Its fast, scales well, battle tested also easier to verify and troubleshoot. Unless there are special needs (like support of port ranges) which can be met only with iptables based Kube-proxy, an IPVS based service proxy is better option. Since we are building on top of solid foundation which does heavy lifting a solution can implemented few hundred lines of code and less error prone.</p>
 
 <p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="720" data-height="" data-theme="default"></div>
 <script src="//cdn.jsdelivr.net/github-cards/latest/widget.js"></script></p>
