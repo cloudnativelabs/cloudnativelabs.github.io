@@ -119,6 +119,9 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 
 &lt;p&gt;Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. But concepts described can be used to build your own version of network policy enforcer with iptables.&lt;/p&gt;
 
+&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
+&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
 &lt;p&gt;Kubernetes networking has following security model:&lt;/p&gt;
 
 &lt;ul&gt;
@@ -126,6 +129,12 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 &lt;li&gt;default allow behaviour can be changed to default deny on per namespace basis. When a namespace is configured with isolation tye of &lt;strong&gt;DefaultDeny&lt;/strong&gt; no traffic is allowed to the pods in that namespace&lt;/li&gt;
 &lt;li&gt;when a namespace is configured with &lt;strong&gt;DefaultDeny&lt;/strong&gt; isolation type, network policies can be configured in the namespace to whitelist the traffic to the pods in that namespace&lt;/li&gt;
 &lt;/ul&gt;
+
+&lt;h3 id=&#34;demo&#34;&gt;Demo&lt;/h3&gt;
+
+&lt;p&gt;Lets see quick demo of network policies in action&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/120735&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/120735.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;Lets quickly recap what network policies are then we will dive in to the iptables based solution aspects.&lt;/p&gt;
 
@@ -237,6 +246,12 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN3
 iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreachable
 &lt;/code&gt;&lt;/pre&gt;
 
+&lt;h3 id=&#34;walkthrough-how-iptables-are-setup&#34;&gt;walkthrough how iptables are setup&lt;/h3&gt;
+
+&lt;p&gt;Quick walkthrough of how iptables are setup on the node&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/120868&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/120868.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+
 &lt;h3 id=&#34;packet-flow&#34;&gt;packet flow&lt;/h3&gt;
 
 &lt;p&gt;Packet flow through the cluster node goes through following path with pod specific firewall and network policy chains in place:&lt;/p&gt;
@@ -262,14 +277,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 &lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
 
-&lt;p&gt;We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in [Kube-router][1]. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
-&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
-
-&lt;h3 id=&#34;demo&#34;&gt;Demo&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/120735&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/120735.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.&lt;/p&gt;
 </description>
     </item>
     

@@ -126,6 +126,9 @@ ga('send', 'pageview');
 
 <p>Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a>. But concepts described can be used to build your own version of network policy enforcer with iptables.</p>
 
+<p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="720" data-height="" data-theme="default"></div>
+<script src="//cdn.jsdelivr.net/github-cards/latest/widget.js"></script></p>
+
 <p>Kubernetes networking has following security model:</p>
 
 <ul>
@@ -133,6 +136,12 @@ ga('send', 'pageview');
 <li>default allow behaviour can be changed to default deny on per namespace basis. When a namespace is configured with isolation tye of <strong>DefaultDeny</strong> no traffic is allowed to the pods in that namespace</li>
 <li>when a namespace is configured with <strong>DefaultDeny</strong> isolation type, network policies can be configured in the namespace to whitelist the traffic to the pods in that namespace</li>
 </ul>
+
+<h3 id="demo">Demo</h3>
+
+<p>Lets see quick demo of network policies in action</p>
+
+<p><a href="https://asciinema.org/a/120735"><img src="https://asciinema.org/a/120735.png" alt="asciicast" /></a></p>
 
 <p>Lets quickly recap what network policies are then we will dive in to the iptables based solution aspects.</p>
 
@@ -244,6 +253,12 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j KUBE-NWPLCY-CHAIN3
 iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreachable
 </code></pre>
 
+<h3 id="walkthrough-how-iptables-are-setup">walkthrough how iptables are setup</h3>
+
+<p>Quick walkthrough of how iptables are setup on the node</p>
+
+<p><a href="https://asciinema.org/a/120868"><img src="https://asciinema.org/a/120868.png" alt="asciicast" /></a></p>
+
 <h3 id="packet-flow">packet flow</h3>
 
 <p>Packet flow through the cluster node goes through following path with pod specific firewall and network policy chains in place:</p>
@@ -269,14 +284,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 <h3 id="conclusion">conclusion</h3>
 
-<p>We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in [Kube-router][1]. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.</p>
-
-<p><div class="github-card" data-github="cloudnativelabs/kube-router" data-width="720" data-height="" data-theme="default"></div>
-<script src="//cdn.jsdelivr.net/github-cards/latest/widget.js"></script></p>
-
-<h3 id="demo">Demo</h3>
-
-<p><a href="https://asciinema.org/a/120735"><img src="https://asciinema.org/a/120735.png" alt="asciicast" /></a></p>
+<p>We went over how iptables can be used to implement a solution that can enforce network policies on each cluster node. An implementation of approach discussed in the article is implemented in <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a>. You can deploy Kube-router and see how iptables are used as effective solution to enforce network policies.</p>
 
       </article>
 
