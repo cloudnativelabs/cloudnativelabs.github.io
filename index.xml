@@ -266,6 +266,10 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 
 &lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
 &lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;demo&#34;&gt;Demo&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/120735&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/120735.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
