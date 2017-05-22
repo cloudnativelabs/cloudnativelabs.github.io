@@ -7,8 +7,61 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>info@cloudnativelabs.net (Cloudnative Labs)</managingEditor>
     <webMaster>info@cloudnativelabs.net (Cloudnative Labs)</webMaster>
-    <lastBuildDate>Fri, 12 May 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 22 May 2017 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://cloudnativelabs.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Kubernetes pod networking and beyond with BGP</title>
+      <link>https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/</link>
+      <pubDate>Mon, 22 May 2017 00:00:00 +0000</pubDate>
+      <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
+      <guid>https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/</guid>
+      <description>
+
+&lt;p&gt;In earlier blog on &lt;a href=&#34;https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/&#34;&gt;Kubernetes networking&lt;/a&gt; we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt; implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.&lt;/p&gt;
+
+&lt;h2 id=&#34;host-routing-based-l3-solution&#34;&gt;host routing based L3 solution&lt;/h2&gt;
+
+&lt;p&gt;As we have seen previous blog &lt;a href=&#34;https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/&#34;&gt;Kubernetes networking&lt;/a&gt;, we can have solution based on either L2 or L3 approach or based on the overly solutions. Kube-router choose to implement a solution based on L3 routing solution. Kube-router does not perform subnet management and relies upon Kubernetes controll manager to do the subnet allocation for each node. Each node in the cluster is allocated unique subnet from the cluster CIDR range for allocation of IP&amp;rsquo;s to the pods running on the node. For cross node pod-to-pod networking we can build a L3 solution either by gateway based routing or host based routing as seen in the &lt;a href=&#34;https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/&#34;&gt;blog&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Lets see how host based routing achives cross-node pod-to-pod networking with below example. Lets assume Node1 and Node2 are allocated subnets 10.1.1.0/24 and 10.1.2.0/24 respectivley. So its just matter of installing route on each node to route the subnet to the node to which subnet is allocated as shown below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://cloudnativelabs.github.io/img/l3-host-routing.jpg&#34; alt=&#34;Host Routing&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;A simplest approach Kube-router could have taken is to learn the subnets assinged to each node and install the routes accordingly on each of the nodes. There are two reasons this approach was not taken.
+First Kubernetes has a clean approach w.r.t networking for the green field cloud native applications. But its possible in the near future (there is huge community &lt;a href=&#34;https://groups.google.com/forum/#!topic/kubernetes-sig-network/8nDSQ2hF40w&#34;&gt;push&lt;/a&gt; for the multi-networks ) Kubernetes might have multiple networks and isolated network spanning multiple nodes much like network in IAAS clouds.
+Second if we want pod ip&amp;rsquo;s routable from outside the cluster this approach wont work.&lt;/p&gt;
+
+&lt;p&gt;Kube-router has taken the approach of running a standard BGP routing protocol on each node which can advertise pod CIDR&amp;rsquo;s to the peers and configured BGP peers. There are other solutions like Calico, Contiv which similarly use BGP for Kubernetes networking. But Kube-router with ability to act as service proxy as well puts in unique situation to enable new use cases. Kube-router along with advertising pod CIDR of each nodes to peers, can also advertise service cluster IP&amp;rsquo;s to external routing infrastructure.
+We will go over the deails how BGP enables these scenarios in below section.&lt;/p&gt;
+
+&lt;h3 id=&#34;why-bgp&#34;&gt;Why BGP?&lt;/h3&gt;
+
+&lt;p&gt;First natural question is why use BGP? Is it not overkill for the protocol that runs the internet to be used for simple use-cases? As it turns out BGP core is a relatively simple protocol for routes exchange. As we will see in next section use of BGP is really transparent and no configuration is required for basic pod-to-pod connectivity. In case where you want pod IP&amp;rsquo;s to be routable we just need to peer with BGP router outside the cluster. Use of BGP in the datacenters is quite common and is in fact an approach taken by SDN controllers like Contrail, Nuage for overlay networks in IAAS clouds.&lt;/p&gt;
+
+&lt;h3 id=&#34;pod-to-pod-cross-node-networking-with-bgp&#34;&gt;Pod-to-pod cross node networking with BGP&lt;/h3&gt;
+
+&lt;p&gt;Kube-router runs iBGP on each cluster nodes, and automatically peers with all the nodes in the cluster in full-mesh at this point (can be easily changed to use route reflector for scaling). All the nodes in the cluster will be put in configurable priavate ASN. Kube-router will advertise the pod CIDR allocated for the node to the peers and install the learned routes from the peers in the node host namespace.&lt;/p&gt;
+
+&lt;p&gt;Please see the demo to get the feel for how Kube-router runs iBGP on each node to advertise the route and pod-to-pod networking established.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/120885&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/120885.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;In this simple setup each node is running BGP is in isolation to the cluster and there are no concerns of routes getting leaked or interfering with underlay so pod IP&amp;rsquo;s remains routable only inside the cluster.&lt;/p&gt;
+
+&lt;h3 id=&#34;routable-pods-and-service-ip&#34;&gt;Routable pods and service IP&lt;/h3&gt;
+
+&lt;p&gt;We can also peer with existing routers outside the cluster so that pod IP&amp;rsquo;s will be routable from outside the cluster. Also, Kube-router advertises the cluster IP when service is created. A service can be accessed from outside the cluster using single cluster IP and standard ports.&lt;/p&gt;
+
+&lt;p&gt;Please see below demo how Kube-router advertises pod CIDR and service Cluster IP to the external routers.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://asciinema.org/a/121635&#34;&gt;&lt;img src=&#34;https://asciinema.org/a/121635.png&#34; alt=&#34;asciicast&#34; /&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
+
+&lt;p&gt;A pure L3 routing based solution is possibly a best solution in terms of performance, simplicity. We can use standard tools like traceroute, ip route to troubleshoot connectivity issues. Combined with BGP ability to advertise routes to external BGP peers we can have a flexible solution with Kube-router.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Kubernetes network services proxy with IPVS/LVS</title>
@@ -103,9 +156,6 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
 &lt;h3 id=&#34;conclusion&#34;&gt;conclusion&lt;/h3&gt;
 
 &lt;p&gt;An IPVS based service proxy for Kubernetes deployment is a practical option. Its fast, scales well, battle tested also easier to verify and troubleshoot. Unless there are special needs (like support of port ranges) which can be met only with iptables based Kube-proxy, an IPVS based service proxy is better option. Since we are building on top of solid foundation which does heavy lifting a solution can implemented few hundred lines of code and less error prone.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
-&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -118,9 +168,6 @@ cluster and accessing node ports needs masqurading traffic so that SNAT is perfo
       <description>
 
 &lt;p&gt;Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in &lt;a href=&#34;https://github.com/cloudnativelabs/kube-router&#34;&gt;Kube-router&lt;/a&gt;. But concepts described can be used to build your own version of network policy enforcer with iptables.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
-&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
 
 &lt;p&gt;Kubernetes networking has following security model:&lt;/p&gt;
 
@@ -290,9 +337,6 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
       <description>
 
 &lt;p&gt;In previous &lt;a href=&#34;https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/&#34;&gt;blog&lt;/a&gt; we went over the Kubernetes service discovery, load balancing and network policies. In this blog we will use Kube-router a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;github-card&#34; data-github=&#34;cloudnativelabs/kube-router&#34; data-width=&#34;720&#34; data-height=&#34;&#34; data-theme=&#34;default&#34;&gt;&lt;/div&gt;
-&lt;script src=&#34;//cdn.jsdelivr.net/github-cards/latest/widget.js&#34;&gt;&lt;/script&gt;&lt;/p&gt;
 
 &lt;p&gt;We will setup a Kubernetes cluster from scratch and use kube-router instead of kube-proxy and demonstrate how kube-router provides a solution for cross-node pod-to-pod networking, provides a service proxy on each node and load balances the traffic. We will also see the network policies in action.&lt;/p&gt;
 
@@ -575,6 +619,29 @@ spec:
 &lt;h2 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h2&gt;
 
 &lt;p&gt;We have covered how the cross-node pod-to-pod networking works, how services are exposed with in the cluster to the pods, and externally. What makes Kubernetes networking interesting is how the design of core concepts like services, network policy ete permits several possible implementations. Though some core components and addons provide default implementation, they are totally replaceable. There whole ecosystem of network solution that plugs neatly in to Kubernetes networking semantics. In &lt;a href=&#34;http://cloudnativelabs.github.io/blog/post/kube-router/&#34;&gt;kube-router&lt;/a&gt; blog we will walk through a solution for Kubernetes that provides cross-node pod-to-pod networking, service proxy and ingress firewall for the pods.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>About me</title>
+      <link>https://cloudnativelabs.github.io/page/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
+      <guid>https://cloudnativelabs.github.io/page/about/</guid>
+      <description>
+
+&lt;p&gt;My name is Inigo Montoya. I have the following qualities:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;I rock a great mustache&lt;/li&gt;
+&lt;li&gt;I&amp;rsquo;m extremely loyal to my family&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;What else do you need?&lt;/p&gt;
+
+&lt;h3 id=&#34;my-history&#34;&gt;my history&lt;/h3&gt;
+
+&lt;p&gt;To be honest, I&amp;rsquo;m having some trouble remembering right now, so why don&amp;rsquo;t you just watch &lt;a href=&#34;http://en.wikipedia.org/wiki/The_Princess_Bride_%28film%29&#34;&gt;my movie&lt;/a&gt; and it will answer &lt;strong&gt;all&lt;/strong&gt; your questions.&lt;/p&gt;
 </description>
     </item>
     

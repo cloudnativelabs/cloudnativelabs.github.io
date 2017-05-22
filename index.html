@@ -96,6 +96,28 @@ ga('send', 'pageview');
           
           
             <article class="post-preview">
+              <a href="https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/">
+                <h2 class="post-title">Kubernetes pod networking and beyond with BGP</h2>
+                
+              </a>
+
+              <span class="post-meta">
+  Posted on May 22, 2017
+  
+</span>
+
+
+              <div class="post-entry">
+                
+                  In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how Kube-router implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.
+                  <a href="https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/" class="post-read-more">[Read More]</a>
+                
+              </div>
+
+              
+            </article>
+          
+            <article class="post-preview">
               <a href="https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/">
                 <h2 class="post-title">Kubernetes network services proxy with IPVS/LVS</h2>
                 
@@ -154,7 +176,6 @@ ga('send', 'pageview');
               <div class="post-entry">
                 
                   In previous blog we went over the Kubernetes service discovery, load balancing and network policies. In this blog we will use Kube-router a distributed load balancer, firewall and router for Kubernetes and demonstrate the Kubernetes networking constructs in action.
- 
 We will setup a Kubernetes cluster from scratch and use kube-router instead of kube-proxy and demonstrate how kube-router provides a solution for cross-node pod-to-pod networking, provides a service proxy on each node and load balances the traffic.
                   <a href="https://cloudnativelabs.github.io/post/2017-04-19-kube-router/" class="post-read-more">[Read More]</a>
                 

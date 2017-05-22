@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>Kubernetes pod networking and beyond with BGP</title>
+  <meta property="og:title" content="Kubernetes pod networking and beyond with BGP" />
+  <meta name="twitter:title" content="Kubernetes pod networking and beyond with BGP" />
+  <meta name="description" content="In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how Kube-router implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.">
+  <meta property="og:description" content="In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how Kube-router implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.">
+  <meta name="twitter:description" content="In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that …">
+  <meta name="author" content="Cloudnative Labs"/>
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@cloudnativelabs" />
+  <meta name="twitter:creator" content="@cloudnativelabs" />
+  <meta property="og:url" content="https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+
+  <meta name="generator" content="Hugo 0.19" />
+  <link rel="canonical" href="https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/" />
+  <link rel="alternate" href="https://cloudnativelabs.github.io/index.xml" type="application/rss+xml" title="">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" integrity="sha384-wITovz90syo1dJWVh32uuETPVEtGigN07tkttEqPv+uR2SE/mbQcG7ATL28aI9H0" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/main.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" />
+  <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/pygment_highlights.css" />
+  <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/highlight.min.css" />
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97817717-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+</head>
+
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://cloudnativelabs.github.io"></a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="main-navbar">
+      <ul class="nav navbar-nav navbar-right">
+        
+          
+            <li>
+              <a title="Blog" href="/">Blog</a>
+            </li>
+          
+        
+
+        
+
+        
+      </ul>
+    </div>
+
+    <div class="avatar-container">
+      <div class="avatar-img-border">
+        
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+
+
+    
+  
+  
+  
+
+
+
+
+  
+
+  <header class="header-section ">
+    
+    <div class="intro-header no-img">
+      
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="post-heading">
+              <h1>Kubernetes pod networking and beyond with BGP</h1>
+                
+                
+                  <span class="post-meta">
+  Posted on May 22, 2017
+  
+</span>
+
+
+                
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+    
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+      <article role="main" class="blog-post">
+        
+
+<p>In earlier blog on <a href="https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/">Kubernetes networking</a> we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how <a href="https://github.com/cloudnativelabs/kube-router">Kube-router</a> implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.</p>
+
+<h2 id="host-routing-based-l3-solution">host routing based L3 solution</h2>
+
+<p>As we have seen previous blog <a href="https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/">Kubernetes networking</a>, we can have solution based on either L2 or L3 approach or based on the overly solutions. Kube-router choose to implement a solution based on L3 routing solution. Kube-router does not perform subnet management and relies upon Kubernetes controll manager to do the subnet allocation for each node. Each node in the cluster is allocated unique subnet from the cluster CIDR range for allocation of IP&rsquo;s to the pods running on the node. For cross node pod-to-pod networking we can build a L3 solution either by gateway based routing or host based routing as seen in the <a href="https://cloudnativelabs.github.io/post/2017-04-18-kubernetes-networking/">blog</a>.</p>
+
+<p>Lets see how host based routing achives cross-node pod-to-pod networking with below example. Lets assume Node1 and Node2 are allocated subnets 10.1.1.0/24 and 10.1.2.0/24 respectivley. So its just matter of installing route on each node to route the subnet to the node to which subnet is allocated as shown below.</p>
+
+<p><img src="/img/l3-host-routing.jpg" alt="Host Routing" /></p>
+
+<p>A simplest approach Kube-router could have taken is to learn the subnets assinged to each node and install the routes accordingly on each of the nodes. There are two reasons this approach was not taken.
+First Kubernetes has a clean approach w.r.t networking for the green field cloud native applications. But its possible in the near future (there is huge community <a href="https://groups.google.com/forum/#!topic/kubernetes-sig-network/8nDSQ2hF40w">push</a> for the multi-networks ) Kubernetes might have multiple networks and isolated network spanning multiple nodes much like network in IAAS clouds.
+Second if we want pod ip&rsquo;s routable from outside the cluster this approach wont work.</p>
+
+<p>Kube-router has taken the approach of running a standard BGP routing protocol on each node which can advertise pod CIDR&rsquo;s to the peers and configured BGP peers. There are other solutions like Calico, Contiv which similarly use BGP for Kubernetes networking. But Kube-router with ability to act as service proxy as well puts in unique situation to enable new use cases. Kube-router along with advertising pod CIDR of each nodes to peers, can also advertise service cluster IP&rsquo;s to external routing infrastructure.
+We will go over the deails how BGP enables these scenarios in below section.</p>
+
+<h3 id="why-bgp">Why BGP?</h3>
+
+<p>First natural question is why use BGP? Is it not overkill for the protocol that runs the internet to be used for simple use-cases? As it turns out BGP core is a relatively simple protocol for routes exchange. As we will see in next section use of BGP is really transparent and no configuration is required for basic pod-to-pod connectivity. In case where you want pod IP&rsquo;s to be routable we just need to peer with BGP router outside the cluster. Use of BGP in the datacenters is quite common and is in fact an approach taken by SDN controllers like Contrail, Nuage for overlay networks in IAAS clouds.</p>
+
+<h3 id="pod-to-pod-cross-node-networking-with-bgp">Pod-to-pod cross node networking with BGP</h3>
+
+<p>Kube-router runs iBGP on each cluster nodes, and automatically peers with all the nodes in the cluster in full-mesh at this point (can be easily changed to use route reflector for scaling). All the nodes in the cluster will be put in configurable priavate ASN. Kube-router will advertise the pod CIDR allocated for the node to the peers and install the learned routes from the peers in the node host namespace.</p>
+
+<p>Please see the demo to get the feel for how Kube-router runs iBGP on each node to advertise the route and pod-to-pod networking established.</p>
+
+<p><a href="https://asciinema.org/a/120885"><img src="https://asciinema.org/a/120885.png" alt="asciicast" /></a></p>
+
+<p>In this simple setup each node is running BGP is in isolation to the cluster and there are no concerns of routes getting leaked or interfering with underlay so pod IP&rsquo;s remains routable only inside the cluster.</p>
+
+<h3 id="routable-pods-and-service-ip">Routable pods and service IP</h3>
+
+<p>We can also peer with existing routers outside the cluster so that pod IP&rsquo;s will be routable from outside the cluster. Also, Kube-router advertises the cluster IP when service is created. A service can be accessed from outside the cluster using single cluster IP and standard ports.</p>
+
+<p>Please see below demo how Kube-router advertises pod CIDR and service Cluster IP to the external routers.</p>
+
+<p><a href="https://asciinema.org/a/121635"><img src="https://asciinema.org/a/121635.png" alt="asciicast" /></a></p>
+
+<h3 id="conclusion">conclusion</h3>
+
+<p>A pure L3 routing based solution is possibly a best solution in terms of performance, simplicity. We can use standard tools like traceroute, ip route to troubleshoot connectivity issues. Combined with BGP ability to advertise routes to external BGP peers we can have a flexible solution with Kube-router.</p>
+
+      </article>
+
+      <ul class="pager blog-pager">
+        
+          <li class="previous">
+            <a href="https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/" data-toggle="tooltip" data-placement="top" title="Kubernetes network services proxy with IPVS/LVS">&larr; Previous Post</a>
+          </li>
+        
+        
+      </ul>
+
+      
+        
+          <div class="disqus-comments">
+            <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'cloudnativelabs';
+    var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-22-kube-pod-networking\/';
+    var disqus_title = 'Kubernetes pod networking and beyond with BGP';
+    var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-22-kube-pod-networking\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+          </div>
+        
+      
+
+    </div>
+  </div>
+</div>
+
+    <footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <ul class="list-inline text-center footer-links">
+          
+              <li>
+                <a href="mailto:info@cloudnativelabs.net" title="Email me">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/cloudnativelabs" title="GitHub">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://twitter.com/cloudnativelabs" title="Twitter">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+          
+          <li>
+            <a href="https://cloudnativelabs.github.io/index.xml" title="RSS">
+              <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="credits copyright text-muted">
+          Cloudnative Labs
+          &nbsp;&bull;&nbsp;
+          2017
+
+          
+        </p>
+        
+        <p class="credits theme-by text-muted">
+          <a href="http://gohugo.io">Hugo v0.19</a> powered &nbsp;&bull;&nbsp; Theme by <a href="http://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a> adapted to <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js" integrity="sha384-/y1Nn9+QQAipbNQWU65krzJralCnuOasHncUFXGkdwntGeSvQicrYkiUBwsgUqc1" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/contrib/auto-render.min.js" integrity="sha384-dq1/gEHSxPZQ7DdrM82ID4YVol9BYyU7GbWlIwnwyPzotpoc57wDw/guX8EaYGPx" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://cloudnativelabs.github.io/js/main.js"></script>
+<script src="https://cloudnativelabs.github.io/js/highlight.min.js"></script>
+<script> hljs.initHighlightingOnLoad(); </script>
+<script> renderMathInElement(document.body); </script>
+
+
+
+
+
+  </body>
+</html>
+

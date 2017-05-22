@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/</loc>
+    <lastmod>2017-05-22T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</loc>
     <lastmod>2017-05-12T00:00:00+00:00</lastmod>
   </url>
@@ -23,13 +28,22 @@
   
   <url>
     <loc>https://cloudnativelabs.github.io/</loc>
-    <lastmod>2017-05-12T00:00:00+00:00</lastmod>
+    <lastmod>2017-05-22T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/page/about/</loc>
+  </url>
+  
+  <url>
+    <loc>https://cloudnativelabs.github.io/page/</loc>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://cloudnativelabs.github.io/post/</loc>
-    <lastmod>2017-05-12T00:00:00+00:00</lastmod>
+    <lastmod>2017-05-22T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
