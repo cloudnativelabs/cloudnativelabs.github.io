@@ -1,0 +1,54 @@
+baseurl = "https://cloudnativelabs.github.io"
+DefaultContentLanguage = "en"
+#DefaultContentLanguage = "ja"
+#title = "Cloudnative Labs"
+#theme = "beautifulhugo"
+metaDataFormat = "yaml"
+pygmentsUseClasses = true
+pygmentCodeFences = true
+disqusShortname = "cloudnativelabs"
+googleAnalytics = "UA-97817717-1"
+
+[Params]
+  #subtitle = "Build a beautiful and simple website in minutes"
+#  logo = "img/CloudNative.jpg"
+#  favicon = "img/CloudNative.jpg"
+  dateFormat = "January 2, 2006"
+  #commit = false
+  rss = true
+  comments = true
+#  gcse = "012345678901234567890:abcdefghijk" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
+
+#[[Params.bigimg]]
+#  src = "img/triangle.jpg"
+#  desc = "Triangle"
+#[[Params.bigimg]]
+#  src = "img/sphere.jpg"
+#  desc = "Sphere"
+#[[Params.bigimg]]
+#  src = "img/hexagon.jpg"
+#  desc = "Hexagon"
+
+[Author]
+  github = "cloudnativelabs"
+  twitter = "cloudnativelabs"
+  name = "Cloudnative Labs"
+  email = "info@cloudnativelabs.net"
+  #facebook = "username"
+  #googleplus = "+username" # or xxxxxxxxxxxxxxxxxxxxx
+  #reddit = "username"
+  #linkedin = "username"
+  #xing = "username"
+  #stackoverflow = "users/XXXXXXX/username"
+  #snapchat = "username"
+  #instagram = "username"
+  #youtube = "user/username" # or channel/channelname
+  #soundcloud = "username"
+  #spotify = "username"
+  #bandcamp = "username"
+  #itchio = "username"
+
+[[menu.main]]
+    name = "Blog"
+    url = ""
+    weight = 1
