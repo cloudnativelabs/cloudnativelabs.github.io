@@ -5,9 +5,9 @@ date: 2017-04-18
 
 This article gives brief overview of fundamnetal networking concepts in Kubernetes.
 
-First thing one notices with Kubernetes in comparision to other container orchestration platforms is container itself is not a first class construct in Kubernetes. Containers always exists in the context of pod. So first lets understand the basic Kubernetes building block _Pod_ that consumes network. A pod is a group of one or more containers that are always co-located and co-scheduled, and run in a shared context. The shared context of a pod is a set of Linux namespaces, cgroups etc. Containers within a pod share an IP address and port space, and can find each other via localhost. They can also communicate with each other using standard inter-process communications. Think of it as an application-specific "logical host" containing one or more application containers which are relatively tightly coupled. Containers in different pods have distinct IP addresses and can not communicate by IPC. Please refer to Pod [overview](https://kubernetes.io/docs/concepts/workloads/pods/pod/) for further details. As far as networking is concerned pod is the network endpoint. So essentially Kubernetes networking is all about Pods. With that note lets procced.
+First thing one notices with Kubernetes in comparision to other container orchestration platforms is container itself is not a first class construct in Kubernetes. Containers always exists in the context of pod. So first lets understand the basic Kubernetes building block _Pod_ that consumes network. A pod is a group of one or more containers that are always co-located and co-scheduled, and run in a shared context. The shared context of a pod is a set of Linux namespaces, cgroups etc. Containers within a pod share an IP address and port space, and can find each other via localhost. They can also communicate with each other using standard inter-process communications. Think of it as an application-specific "logical host" containing one or more application containers which are relatively tightly coupled. Containers in different pods have distinct IP addresses and can not communicate by IPC. Please refer to Pod [overview](https://kubernetes.io/docs/concepts/workloads/pods/pod/) for further details. As far as networking is concerned pod is the network endpoint. So essentially Kubernetes networking is all about connectivity between Pods. With that note lets procced.
 
-Networking functionality in Kubernetes (as of 1.6.1) broadly address below problems:
+Networking functionality in Kubernetes broadly address below problems:
 
 * How cross-node pod-to-pod connectivity (for east-west traffic) is achieved.
 * How the services running in the pods are discovered by other pods, and how pod-to-pod traffic is load balanced when consuming a service.
@@ -44,6 +44,7 @@ Kubernetes does not orchestrate setting up the network and offloads the job to t
 * layer 2 (switching) solution
 * layer 3 (routing) solution
 * overlay solutions
+
 
 #### layer 2 solution
 
