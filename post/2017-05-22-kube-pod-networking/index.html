@@ -5,9 +5,6 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-  <title>Kubernetes pod networking and beyond with BGP</title>
-  <meta property="og:title" content="Kubernetes pod networking and beyond with BGP" />
-  <meta name="twitter:title" content="Kubernetes pod networking and beyond with BGP" />
   <meta name="description" content="In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how Kube-router implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.">
   <meta property="og:description" content="In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that meets Kubernetes networking requirements with varying degree of complexity, flexibility. In this blog we will see how Kube-router implements a pure L3 solution for cross node pod-to-pod networking using BGP and see how use of BGP gives unique advantage which enables pod IP and Kubernetes service cluster IP to be routable from out side of the cluster.">
   <meta name="twitter:description" content="In earlier blog on Kubernetes networking we have seen how Kubernetes is non-prescriptive of how the network should be designed for running pods. There can be multiple way to design the network that …">
@@ -89,32 +86,7 @@ ga('send', 'pageview');
 
 
 
-  
-
-  <header class="header-section ">
-    
-    <div class="intro-header no-img">
-      
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-            <div class="post-heading">
-              <h1>Kubernetes pod networking and beyond with BGP</h1>
-                
-                
-                  <span class="post-meta">
-  Posted on May 22, 2017
-  
-</span>
-
-
-                
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
+  <div class="intro-header"></div>
 
 
     
@@ -185,7 +157,7 @@ We will go over the deails how BGP enables these scenarios in below section.</p>
 <script type="text/javascript">
     var disqus_shortname = 'cloudnativelabs';
     var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-22-kube-pod-networking\/';
-    var disqus_title = 'Kubernetes pod networking and beyond with BGP';
+    var disqus_title = '';
     var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-22-kube-pod-networking\/';
 
     (function() {
