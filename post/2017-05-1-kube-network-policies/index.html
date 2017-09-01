@@ -5,9 +5,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-  <title>Enforcing Kubernetes network policies with iptables</title>
-  <meta property="og:title" content="Enforcing Kubernetes network policies with iptables" />
-  <meta name="twitter:title" content="Enforcing Kubernetes network policies with iptables" />
+  <title>Kube-router: Enforcing Kubernetes network policies with iptables and ipset</title>
+  <meta property="og:title" content="Kube-router: Enforcing Kubernetes network policies with iptables and ipset" />
+  <meta name="twitter:title" content="Kube-router: Enforcing Kubernetes network policies with iptables and …" />
   <meta name="description" content="Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in Kube-router.">
   <meta property="og:description" content="Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show how iptables on the the cluster nodes can be used to build a distributed firewall solution that enforces network policies in Kubernetes clusters. This write up draws up from the insights of implementing a network policy controller in Kube-router.">
   <meta name="twitter:description" content="Network policies in Kubernetes provides primary means to secure a pod by exerting control over who can connect to pod. Intent of this blog post is not to describe what network policies are but to show …">
@@ -99,7 +99,7 @@ ga('send', 'pageview');
         <div class="row">
           <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
             <div class="post-heading">
-              <h1>Enforcing Kubernetes network policies with iptables</h1>
+              <h1>Kube-router: Enforcing Kubernetes network policies with iptables and ipset</h1>
                 
                 
                   <span class="post-meta">
@@ -293,7 +293,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
         
         
           <li class="next">
-            <a href="https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/" data-toggle="tooltip" data-placement="top" title="Kubernetes network services proxy with IPVS/LVS">Next Post &rarr;</a>
+            <a href="https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/" data-toggle="tooltip" data-placement="top" title="Kube-router: Kubernetes network services proxy with IPVS/LVS">Next Post &rarr;</a>
           </li>
         
       </ul>
@@ -305,7 +305,7 @@ iptables -A KUBE-POD-SPECIFIC-FW-CHAIN -j REJECT --reject-with icmp-port-unreach
 <script type="text/javascript">
     var disqus_shortname = 'cloudnativelabs';
     var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-1-kube-network-policies\/';
-    var disqus_title = 'Enforcing Kubernetes network policies with iptables';
+    var disqus_title = 'Kube-router: Enforcing Kubernetes network policies with iptables and ipset';
     var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-05-1-kube-network-policies\/';
 
     (function() {

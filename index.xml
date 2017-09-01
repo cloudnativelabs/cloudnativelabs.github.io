@@ -22,7 +22,7 @@
     </item>
     
     <item>
-      <title>Kubernetes network services proxy with IPVS/LVS</title>
+      <title>Kube-router: Kubernetes network services proxy with IPVS/LVS</title>
       <link>https://cloudnativelabs.github.io/post/2017-05-10-kube-network-service-proxy/</link>
       <pubDate>Fri, 12 May 2017 00:00:00 +0000</pubDate>
       <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
@@ -31,7 +31,7 @@
     </item>
     
     <item>
-      <title>Enforcing Kubernetes network policies with iptables</title>
+      <title>Kube-router: Enforcing Kubernetes network policies with iptables and ipset</title>
       <link>https://cloudnativelabs.github.io/post/2017-05-1-kube-network-policies/</link>
       <pubDate>Wed, 03 May 2017 00:00:00 +0000</pubDate>
       <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
