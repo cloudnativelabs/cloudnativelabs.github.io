@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>Kube-router: Highly-available and scalable ingress for baremetal Kubernetes clusters</title>
+  <meta property="og:title" content="Kube-router: Highly-available and scalable ingress for baremetal Kubernetes clusters" />
+  <meta name="twitter:title" content="Kube-router: Highly-available and scalable ingress for baremetal …" />
+  <meta name="description" content="Over the years many webscale companies have desinged massivley scalable and highly available services using loadbalancer solutions based on commodity Linux servers. Traditional middleboxes are completley replaced with software loadbalancers. In this blog we will see common building blocks across Microsoft&rsquo;s Ananta, Google&rsquo;s Maglev, Facebook&rsquo;s Shiv, Github GLB and Yahoo L3 DSR. We will see how Kube-router has implemented some of these building blocks for Kuberentes, and how you can leverage them to build a highly-available and scalable ingress in bare-metal deployments.">
+  <meta property="og:description" content="Over the years many webscale companies have desinged massivley scalable and highly available services using loadbalancer solutions based on commodity Linux servers. Traditional middleboxes are completley replaced with software loadbalancers. In this blog we will see common building blocks across Microsoft&rsquo;s Ananta, Google&rsquo;s Maglev, Facebook&rsquo;s Shiv, Github GLB and Yahoo L3 DSR. We will see how Kube-router has implemented some of these building blocks for Kuberentes, and how you can leverage them to build a highly-available and scalable ingress in bare-metal deployments.">
+  <meta name="twitter:description" content="Over the years many webscale companies have desinged massivley scalable and highly available services using loadbalancer solutions based on commodity Linux servers. Traditional middleboxes are …">
+  <meta name="author" content="Cloudnative Labs"/>
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@cloudnativelabs" />
+  <meta name="twitter:creator" content="@cloudnativelabs" />
+  <meta property="og:url" content="https://cloudnativelabs.github.io/post/2017-11-01-kube-high-available-ingress/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="" />
+
+  <meta name="generator" content="Hugo 0.21" />
+  <link rel="canonical" href="https://cloudnativelabs.github.io/post/2017-11-01-kube-high-available-ingress/" />
+  <link rel="alternate" href="https://cloudnativelabs.github.io/index.xml" type="application/rss+xml" title="">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" integrity="sha384-wITovz90syo1dJWVh32uuETPVEtGigN07tkttEqPv+uR2SE/mbQcG7ATL28aI9H0" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/main.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" />
+  <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/pygment_highlights.css" />
+  <link rel="stylesheet" href="https://cloudnativelabs.github.io/css/highlight.min.css" />
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97817717-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+</head>
+
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://cloudnativelabs.github.io"></a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="main-navbar">
+      <ul class="nav navbar-nav navbar-right">
+        
+          
+            <li>
+              <a title="Blog" href="/">Blog</a>
+            </li>
+          
+        
+
+        
+
+        
+      </ul>
+    </div>
+
+    <div class="avatar-container">
+      <div class="avatar-img-border">
+        
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+
+
+    
+  
+  
+  
+
+
+
+
+  
+
+  <header class="header-section ">
+    
+    <div class="intro-header no-img">
+      
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="post-heading">
+              <h1>Kube-router: Highly-available and scalable ingress for baremetal Kubernetes clusters</h1>
+                
+                
+                  <span class="post-meta">
+  Posted on November 1, 2017
+  
+</span>
+
+
+                
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+    
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+      <article role="main" class="blog-post">
+        
+
+<p>Over the years many webscale companies have desinged massivley scalable and highly available services using loadbalancer solutions based on commodity Linux servers. Traditional middleboxes are completley replaced with software loadbalancers. In this blog we will see common building blocks across Microsoft&rsquo;s <a href="http://conferences.sigcomm.org/sigcomm/2013/papers/sigcomm/p207.pdf">Ananta</a>,
+Google&rsquo;s <a href="https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/44824.pdf">Maglev</a>,
+Facebook&rsquo;s <a href="https://www.usenix.org/conference/srecon15europe/program/presentation/shuff">Shiv</a>, Github <a href="https://githubengineering.com/introducing-glb/">GLB</a> and Yahoo <a href="https://nanog.org/meetings/nanog51/presentations/Monday/NANOG51.Talk45.nanog51-Schaumann.pdf">L3 DSR</a>. We will see how Kube-router has implemented some of these building blocks for Kuberentes,
+and how you can leverage them to build a highly-available and scalable ingress in bare-metal deployments.</p>
+
+<h2 id="network-desgin">Network Desgin</h2>
+
+<p>Below figure shows typical tiered architecture used in the solutions used by web-scale companies.</p>
+
+<p><img src="/img/webscale-ingress.png" alt="Network requirements" /></p>
+
+<p>Below are some of the standard mechanisams used.</p>
+
+<h3 id="use-of-bgp-ecmp">Use of BGP + ECMP</h3>
+
+<p>You have second tier fleet of L4 directors, each of which is a BGP speaker and advertising service VIP to the BGP router. Routers has equal cost mutliple paths to the VIP through the L4 directors.
+Running the BGP protocol on the L4 director provides automatic failure detection and recovery. If a L4 director fails or shuts down unexpectedly, the router detects this failure via the BGP
+protocol and automatically stops sending traffic to that L4 director. Similarly, when the L4 director comes up, it can start announcing the routes and the router will start forwarding traffic to it.</p>
+
+<h3 id="l3-l4-network-load-balancing">L3/L4 network load balancing</h3>
+
+<p>Since router has multiple paths to advertised vip, it can perform ECMP load balancing. In case router does L3 does balancing, router distributes the traffic across the tier-2 L4 directors.
+Router can also do hash (on packets source, destination ip and port etc) based load balancing. Where traffic corresponding to a same flow always gets forwarded to same L4 director. Even if there are
+more than one router (for redundency) even then traffic can get forwarded to same L4 director by both the routers if consistent hashing is used.</p>
+
+<h3 id="l4-director">L4 director</h3>
+
+<p>A L4 director does not proxy the connection but simply forwards the packets to selected endpoint. So L4 director is stateless. But they can use ECMP to shard traffic using consistent hashing so that, each L4 director selects same endpoint for a particular flow. So even if a L4 director goes down traffic still ends up at the same endpoint. Linux&rsquo;s LVS/IPVS is commanly used as L4 director.</p>
+
+<h3 id="direct-server-return">Direct server return</h3>
+
+<p>In typical load balancer acting as proxy, packets are DNAT&rsquo;ed to real server IP. Return traffic must go through the same loadbalancer so that packets gets SNAT&rsquo;ed (to VIP as source IP). This hinders scale-out approach particulalry when routers are sharding traffic across the L4 directors. To overcome the limitation, as mentioned above L4 director simply forward the packet. It also does tunnel the packets so that original packet is delivered to the service point as is. Various solution are
+available (IPVS/LVS DR mode, use of GRE/IPIP tunnels etc) to send the traffic to endpoint. Since endpoint when it recives the packets, it sees the traffic destined to the VIP (ofcourse endoint needs to be setup to accept traffic to VIP) from the original client. Return traffic is directly sent to the client.</p>
+
+<h3 id="l4-l7-split-design">L4/L7 split design</h3>
+
+<p>Above basic mechanisams can be extended to implement application load balancing. Whats is called L4/L7 split design as shown below.</p>
+
+<p><img src="/img/webscale-ingress-l4-l7-split.png" alt="Network requirements" /></p>
+
+<h2 id="demo">Demo</h2>
+
+<p>Please watch below demo to see how kube-router converts each cluster node into a L4 director built on top of IPVS/LVS. Each node through kube-router also advertises service exteranl IP to configured BGP router. In thie demo standard Lunux running Quagga is used as router. Linux&rsquo;s native flow-based ECMP load balancing is used for the demo.</p>
+
+<p><a href="https://asciinema.org/a/145163"><img src="https://asciinema.org/a/145163.png" alt="asciicast" /></a></p>
+
+      </article>
+
+      <ul class="pager blog-pager">
+        
+          <li class="previous">
+            <a href="https://cloudnativelabs.github.io/post/2017-05-22-kube-pod-networking/" data-toggle="tooltip" data-placement="top" title="Kube-router: Kubernetes pod networking and beyond with BGP">&larr; Previous Post</a>
+          </li>
+        
+        
+      </ul>
+
+      
+        
+          <div class="disqus-comments">
+            <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'cloudnativelabs';
+    var disqus_identifier = 'https:\/\/cloudnativelabs.github.io\/post\/2017-11-01-kube-high-available-ingress\/';
+    var disqus_title = 'Kube-router: Highly-available and scalable ingress for baremetal Kubernetes clusters';
+    var disqus_url = 'https:\/\/cloudnativelabs.github.io\/post\/2017-11-01-kube-high-available-ingress\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+          </div>
+        
+      
+
+    </div>
+  </div>
+</div>
+
+    <footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <ul class="list-inline text-center footer-links">
+          
+              <li>
+                <a href="mailto:info@cloudnativelabs.net" title="Email me">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/cloudnativelabs" title="GitHub">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a href="https://twitter.com/cloudnativelabs" title="Twitter">
+                  <span class="fa-stack fa-lg">
+                    <i class="fa fa-circle fa-stack-2x"></i>
+                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                  </span>
+                </a>
+              </li>
+          
+          <li>
+            <a href="https://cloudnativelabs.github.io/index.xml" title="RSS">
+              <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="credits copyright text-muted">
+          Cloudnative Labs
+          &nbsp;&bull;&nbsp;
+          2017
+
+          
+        </p>
+        
+        <p class="credits theme-by text-muted">
+          <a href="http://gohugo.io">Hugo v0.21</a> powered &nbsp;&bull;&nbsp; Theme by <a href="http://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a> adapted to <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js" integrity="sha384-/y1Nn9+QQAipbNQWU65krzJralCnuOasHncUFXGkdwntGeSvQicrYkiUBwsgUqc1" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/contrib/auto-render.min.js" integrity="sha384-dq1/gEHSxPZQ7DdrM82ID4YVol9BYyU7GbWlIwnwyPzotpoc57wDw/guX8EaYGPx" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://cloudnativelabs.github.io/js/main.js"></script>
+<script src="https://cloudnativelabs.github.io/js/highlight.min.js"></script>
+<script> hljs.initHighlightingOnLoad(); </script>
+<script> renderMathInElement(document.body); </script>
+
+
+
+
+
+  </body>
+</html>
+

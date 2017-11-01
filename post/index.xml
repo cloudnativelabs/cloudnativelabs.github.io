@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>info@cloudnativelabs.net (Cloudnative Labs)</managingEditor>
     <webMaster>info@cloudnativelabs.net (Cloudnative Labs)</webMaster>
-    <lastBuildDate>Mon, 22 May 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 01 Nov 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://cloudnativelabs.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Kube-router: Highly-available and scalable ingress for baremetal Kubernetes clusters</title>
+      <link>https://cloudnativelabs.github.io/post/2017-11-01-kube-high-available-ingress/</link>
+      <pubDate>Wed, 01 Nov 2017 00:00:00 +0000</pubDate>
+      <author>info@cloudnativelabs.net (Cloudnative Labs)</author>
+      <guid>https://cloudnativelabs.github.io/post/2017-11-01-kube-high-available-ingress/</guid>
+      <description>Over the years many webscale companies have desinged massivley scalable and highly available services using loadbalancer solutions based on commodity Linux servers. Traditional middleboxes are completley replaced with software loadbalancers. In this blog we will see common building blocks across Microsoft&amp;rsquo;s Ananta, Google&amp;rsquo;s Maglev, Facebook&amp;rsquo;s Shiv, Github GLB and Yahoo L3 DSR. We will see how Kube-router has implemented some of these building blocks for Kuberentes, and how you can leverage them to build a highly-available and scalable ingress in bare-metal deployments.</description>
+    </item>
     
     <item>
       <title>Kube-router: Kubernetes pod networking and beyond with BGP</title>
