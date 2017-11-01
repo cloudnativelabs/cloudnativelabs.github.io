@@ -164,6 +164,11 @@ available (IPVS/LVS DR mode, use of GRE/IPIP tunnels etc) to send the traffic to
 
 <p><img src="/img/webscale-ingress-l4-l7-split.png" alt="Network requirements" /></p>
 
+<h2 id="how-does-this-apply-to-kubernetes">How does this apply to Kubernetes?</h2>
+
+<p>Kubernetes provides multiple ways to expose service: NodePort, ClusterIP and external IP etc. These underlying mechanisms can be hooked in to cloud load balancers (like ELB/ALB on AWS) when cluster is running on public cloud so some of the problems are solved readily for you. When it comes to bare-metal deployment, exposing services to outside cluster is particularly challenging. You can solve the problem is multiple ways. Kube-router already has the ability to advertise cluster IP and external
+IP&rsquo;s to configured BGP peers, so that services can be exposed easily outside the cluster. Kube-router also has the support to setup direct server return using LVS/IPVS tunnel mode. With building blocks provided by the Kube-router, you can design the services to be exposed outside the cluster in the same manner as above mentioned web scale comapnies.</p>
+
 <h2 id="demo">Demo</h2>
 
 <p>Please watch below demo to see how kube-router converts each cluster node into a L4 director built on top of IPVS/LVS. Each node through kube-router also advertises service exteranl IP to configured BGP router. In thie demo standard Lunux running Quagga is used as router. Linux&rsquo;s native flow-based ECMP load balancing is used for the demo.</p>
