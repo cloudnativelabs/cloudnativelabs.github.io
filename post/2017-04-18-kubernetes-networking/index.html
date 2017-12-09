@@ -188,12 +188,12 @@ ga('send', 'pageview');
      &quot;isDefaultGateway&quot;: true,
      &quot;ipam&quot;: {
          &quot;type&quot;: &quot;host-local&quot;,
-         &quot;subnet&quot;: &quot;10.1.1.0/16&quot;
+         &quot;subnet&quot;: &quot;10.1.0.0/16&quot;
      }
  }
 </code></pre>
 
-<p>kube-bridge need to be pre-created such that ARP packets go out on the physical interface. In order for that we have another bridge with physical interface connected to it and node ip assigned to it to which kube-bridge is hooked through the veth pair like below.</p>
+<p>kube-bridge needs to be pre-created such that ARP packets go out on the physical interface. In order for that we have another bridge with physical interface connected to it and node ip assigned to it to which kube-bridge is hooked through the veth pair like below.</p>
 
 <p><img src="/img/l2-network.jpg" alt="image alt &lt;&gt;" /></p>
 
@@ -215,9 +215,9 @@ ga('send', 'pageview');
  }
 </code></pre>
 
-<p>So how does pod1 with ip 10.1.1.2 running on node1 communicate with pod3 with ip 10.1.2.2 running on node2? we need a way for nodes to route the traffic to other node pod subnets.</p>
+<p>So how does pod1 with ip 10.1.1.2 running on node1 communicate with pod3 with ip 10.1.2.2 running on node2? We need a way for nodes to route the traffic to other node pod subnets.</p>
 
-<p>We could populate default gateway router with routes for the subnet as shown in the below diagram. Route to 10.1.1.0/24 and 10.1.2.0/24 is configured to be through node1 and node2 respectively. We could automate keeping the route tables updated as nodes are added or deleted in to the cluster. We can also use some of the container networking solutions which can do the job on public clouds, for e.g. Flannel back end for AWS and GCE, Weaves AWS-VPC mode etc.</p>
+<p>We could populate the default gateway router with routes for the subnet as shown in the below diagram. Routing to 10.1.1.0/24 and 10.1.2.0/24 are configured to be through node1 and node2 respectively. We could automate keeping the route tables updated as nodes are added or deleted in to the cluster. We can also use some of the container networking solutions which can do the job on public clouds, for e.g. Flannel back end for AWS and GCE, Weaves AWS-VPC mode etc.</p>
 
 <p><img src="/img/l3-gateway-routing.jpg" alt="image alt &lt;&gt;" /></p>
 
